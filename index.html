@@ -238,11 +238,98 @@
         let currentEditingMeetingId = null;
         let currentEditingTaskId = null;
 
-        // Dados padrão caso o banco esteja vazio na primeira vez
+        // Dados padrão caso o banco esteja vazio na primeira vez (BASE COMPLETA)
         const defaultInitialData = [
             {
                 id: "rev-1", date: "14/09 (Segunda-feira)", scope: "Prestação de contas das entregas até 13/09",
-                tasks: [{ id: "t1", date: "12/09", code: "5.1", desc: "Mobilização e diagnóstico", status: "pending", assignee: "", newDate: "" }]
+                tasks: [
+                    { id: "t1", date: "12/09", code: "5.1", desc: "Mobilização e diagnóstico", status: "pending", assignee: "", newDate: "" }
+                ]
+            },
+            {
+                id: "rev-2", date: "21/09 (Segunda-feira)", scope: "Prestação de contas das entregas de 14/09 a 20/09",
+                tasks: [
+                    { id: "t2", date: "14/09", code: "1.2", desc: "Aquisição IA – Empresarial", status: "pending", assignee: "", newDate: "" },
+                    { id: "t3", date: "14/09", code: "2.1", desc: "Atualizar e implantar política de despesas (Contemplar Fluxo, responsabilidades e tetos)", status: "pending", assignee: "", newDate: "" },
+                    { id: "t4", date: "14/09", code: "4.1", desc: "Mapear todas as regras atuais de comissões", status: "pending", assignee: "", newDate: "" },
+                    { id: "t5", date: "15/09", code: "3.1", desc: "Homologação da base para testagem de novas tabelas", status: "pending", assignee: "", newDate: "" },
+                    { id: "t6", date: "17/09", code: "3.2", desc: "Mapear os tipos de vendas existentes hoje e preços praticados", status: "pending", assignee: "", newDate: "" },
+                    { id: "t7", date: "17/09", code: "4.2", desc: "Cruzar comissão × faturamento × margem × recebimento", status: "pending", assignee: "", newDate: "" },
+                    { id: "t8", date: "17/09", code: "5.6", desc: "Classificação dos clientes ativos (manual)", status: "pending", assignee: "", newDate: "" },
+                    { id: "t9", date: "17/09", code: "5.7", desc: "Classificação dos clientes inativos", status: "pending", assignee: "", newDate: "" },
+                    { id: "t10", date: "17/09", code: "7.1", desc: "Diagnóstico: Levantamento dos últimos 12 meses", status: "pending", assignee: "", newDate: "" }
+                ]
+            },
+            {
+                id: "rev-3", date: "28/09 (Segunda-feira)", scope: "Prestação de contas das entregas de 21/09 a 27/09",
+                tasks: [
+                    { id: "t11", date: "21/09", code: "3.3", desc: "Definir os parâmetros oficiais das novas tabelas", status: "pending", assignee: "", newDate: "" },
+                    { id: "t12", date: "21/09", code: "4.5", desc: "Replicar política de comissionamento sob resultado (Especialistas)", status: "pending", assignee: "", newDate: "" },
+                    { id: "t13", date: "23/09", code: "3.4", desc: "Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)", status: "pending", assignee: "", newDate: "" },
+                    { id: "t14", date: "23/09", code: "6.2", desc: "Atualizar e implantar o fluxo do processo licitatório e de gestão de contratos", status: "pending", assignee: "", newDate: "" },
+                    { id: "t15", date: "24/09", code: "7.3", desc: "Segmentação: Classificar ABC (Giro, Faturamento, Rentabilidade)", status: "pending", assignee: "", newDate: "" },
+                    { id: "t16", date: "25/09", code: "4.3", desc: "Simular novos modelos de comissionamento", status: "pending", assignee: "", newDate: "" }
+                ]
+            },
+            {
+                id: "rev-4", date: "05/10 (Segunda-feira)", scope: "Prestação de contas das entregas de 28/09 a 04/10",
+                tasks: [
+                    { id: "t17", date: "30/09", code: "8.1", desc: "Medir os principais indicadores para identificar desvios e tomar decisões rápidas", status: "pending", assignee: "", newDate: "" },
+                    { id: "t18", date: "30/09", code: "8.2", desc: "Aquisição BI Empresarial - Grupo Otima", status: "pending", assignee: "", newDate: "" },
+                    { id: "t19", date: "30/09", code: "10.2", desc: "Desenvolver Instrução de trabalho dos RCA's | Especializada", status: "pending", assignee: "", newDate: "" },
+                    { id: "t20", date: "30/09", code: "10.3", desc: "Desenvolver Instrução de trabalho das Especializadas", status: "pending", assignee: "", newDate: "" },
+                    { id: "t21", date: "01/10", code: "7.4", desc: "Redefinir Estoque Mínimo e Ideal (por Filial), cobertura por perfil de SKU", status: "pending", assignee: "", newDate: "" },
+                    { id: "t22", date: "04/10", code: "10.1", desc: "Garantir cumprimento do pilar 6", status: "pending", assignee: "", newDate: "" }
+                ]
+            },
+            {
+                id: "rev-5", date: "12/10 (Segunda-feira)", scope: "Prestação de contas das entregas de 05/10 a 11/10",
+                tasks: [
+                    { id: "t23", date: "07/10", code: "2.2", desc: "Revisar contas gerenciais", status: "pending", assignee: "", newDate: "" },
+                    { id: "t24", date: "07/10", code: "2.3", desc: "Reclassificação de despesas por centro de custo", status: "pending", assignee: "", newDate: "" },
+                    { id: "t25", date: "09/10", code: "5.5", desc: "Plano de ação, ajustes e expansão", status: "pending", assignee: "", newDate: "" },
+                    { id: "t26", date: "10/10", code: "5.2", desc: "Saneamento do banco e mapeamento Winthor", status: "pending", assignee: "", newDate: "" },
+                    { id: "t27", date: "10/10", code: "7.5", desc: "Criar Plano de Ação com Comercial e Marketing com os produtos parados", status: "pending", assignee: "", newDate: "" }
+                ]
+            },
+            {
+                id: "rev-6", date: "26/10 (Segunda-feira)", scope: "Prestação de contas das entregas de 19/10 a 25/10",
+                tasks: [
+                    { id: "t28", date: "19/10", code: "5.3", desc: "Cruzamento e modelo", status: "pending", assignee: "", newDate: "" },
+                    { id: "t29", date: "19/10", code: "7.6", desc: "Criar política de Auditoria em compras (acompanhamento de pedidos, valores, leadtime, estoques)", status: "pending", assignee: "", newDate: "" }
+                ]
+            },
+            {
+                id: "rev-7", date: "09/11 (Segunda-feira)", scope: "Prestação de contas das entregas do início de Novembro até 08/11",
+                tasks: [
+                    { id: "t30", date: "03/11", code: "7.7", desc: "Desenvolver indicadores e estruturar dashboard", status: "pending", assignee: "", newDate: "" },
+                    { id: "t31", date: "07/11", code: "5.4", desc: "BI e homologação", status: "pending", assignee: "", newDate: "" },
+                    { id: "t32", date: "07/11", code: "5.5", desc: "Plano de ação, ajustes e expansão", status: "pending", assignee: "", newDate: "" },
+                    { id: "t33", date: "07/11", code: "5.6", desc: "Classificação dos clientes Ativos (Manual)", status: "pending", assignee: "", newDate: "" },
+                    { id: "t34", date: "07/11", code: "5.7", desc: "Classificação dos clientes Inativos", status: "pending", assignee: "", newDate: "" },
+                    { id: "t35", date: "07/11", code: "5.8", desc: "Desenvolver um BI - Monitoramento", status: "pending", assignee: "", newDate: "" }
+                ]
+            },
+            {
+                id: "rev-8", date: "07/12 (Segunda-feira)", scope: "Prestação de contas das entregas da semana anterior (foco 30/11)",
+                tasks: [
+                    { id: "t36", date: "30/11", code: "3.4", desc: "Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)", status: "pending", assignee: "", newDate: "" },
+                    { id: "t37", date: "30/11", code: "3.5", desc: "Corrigir distorções", status: "pending", assignee: "", newDate: "" },
+                    { id: "t38", date: "30/11", code: "3.6", desc: "Criar relatórios", status: "pending", assignee: "", newDate: "" }
+                ]
+            },
+            {
+                id: "rev-9", date: "14/12 (Segunda-feira)", scope: "Prestação de contas das entregas de 07/12 a 13/12",
+                tasks: [
+                    { id: "t39", date: "07/12", code: "9.1", desc: "Garantir que clientes, produtos, canais e operações gerem resultado sustentável", status: "pending", assignee: "", newDate: "" }
+                ]
+            },
+            {
+                id: "rev-10", date: "21/12 (Segunda-feira)", scope: "Prestação de contas das entregas de 14/12 a 20/12",
+                tasks: [
+                    { id: "t40", date: "19/12", code: "7.2", desc: "Saneamento: Validar cadastros, SKU ativos/inativos, ABC, Estoque sem giro, Cobertura, Distorções", status: "pending", assignee: "", newDate: "" },
+                    { id: "t41", date: "19/12", code: "7.8", desc: "Governança - Reuniões semanais para tratamento de indicadores", status: "pending", assignee: "", newDate: "" }
+                ]
             }
         ];
 
@@ -274,10 +361,12 @@
             const scheduleRef = doc(db, 'artifacts', appId, 'public', 'data', 'schedule', 'main');
             
             onSnapshot(scheduleRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    state = docSnap.data().meetings || [];
+                // Modificado: Se o banco existir mas tiver menos de 2 reuniões, significa que era o banco de teste antigo.
+                // Nesse caso, injeta a base completa automaticamente.
+                if (docSnap.exists() && docSnap.data().meetings && docSnap.data().meetings.length > 1) {
+                    state = docSnap.data().meetings;
                 } else {
-                    // Se não existir, popula com o default
+                    // Se não existir ou estiver vazio de reuniões, popula com a base completa (41 tarefas)
                     state = [...defaultInitialData];
                     saveStateToCloud();
                 }
