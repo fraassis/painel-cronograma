@@ -131,6 +131,27 @@
                 </div>
             </div>
         </main>
+
+        <!-- SIDEBAR DIREITA (Calendário e Histórico) -->
+        <aside class="w-full xl:w-72 bg-white border-l border-slate-200 shadow-sm flex-shrink-0 z-10 flex flex-col hidden xl:flex">
+            <div class="p-6 md:sticky md:top-[72px] max-h-screen overflow-y-auto">
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Calendário 2026
+                </h2>
+                <div id="calendar-container" class="mb-8">
+                    <!-- Calendário injetado via JS -->
+                </div>
+
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    Log de Auditoria
+                </h2>
+                <div id="logs-container" class="space-y-1">
+                    <!-- Logs injetados via JS -->
+                </div>
+            </div>
+        </aside>
     </div>
 
     <!-- Overlay de Carregamento -->
@@ -231,6 +252,7 @@
 
         // Estado Global Dinâmico
         let state = [];
+        let auditLogs = [];
         let currentFilterAssignee = null;
         let isAdmin = false;
         
@@ -361,15 +383,16 @@
             const scheduleRef = doc(db, 'artifacts', appId, 'public', 'data', 'schedule', 'main');
             
             onSnapshot(scheduleRef, (docSnap) => {
-                // Modificado: Se o banco existir mas tiver menos de 2 reuniões, significa que era o banco de teste antigo.
-                // Nesse caso, injeta a base completa automaticamente.
-                if (docSnap.exists() && docSnap.data().meetings && docSnap.data().meetings.length > 1) {
+                if (docSnap.exists() && docSnap.data().meetings) {
                     state = docSnap.data().meetings;
+                    auditLogs = docSnap.data().logs || [];
                 } else {
-                    // Se não existir ou estiver vazio de reuniões, popula com a base completa (41 tarefas)
+                    // Se não existir, popula com a base padrão
                     state = [...defaultInitialData];
+                    auditLogs = [];
                     saveStateToCloud();
                 }
+                sortState();
                 renderMeetings();
                 finishLoading();
             }, (error) => {
@@ -378,11 +401,27 @@
             });
         }
 
+        // Função para converter data "DD/MM" em número para ordenação
+        function getComparableDate(dateStr) {
+            if (!dateStr) return 9999;
+            const match = dateStr.match(/(\d{2})\/(\d{2})/);
+            if (match) return parseInt(match[2]) * 100 + parseInt(match[1]); // MM * 100 + DD
+            return 9999;
+        }
+
+        // Função para ordenar cronologicamente reuniões e tarefas
+        function sortState() {
+            state.sort((a, b) => getComparableDate(a.date) - getComparableDate(b.date));
+            state.forEach(m => {
+                if(m.tasks) m.tasks.sort((a, b) => getComparableDate(a.date) - getComparableDate(b.date));
+            });
+        }
+
         async function saveStateToCloud() {
             if (!isDbConnected) return;
             const scheduleRef = doc(db, 'artifacts', appId, 'public', 'data', 'schedule', 'main');
             try {
-                await setDoc(scheduleRef, { meetings: state });
+                await setDoc(scheduleRef, { meetings: state, logs: auditLogs });
             } catch (error) {
                 console.error("Erro ao salvar: ", error);
             }
@@ -540,6 +579,68 @@
             });
 
             updateProgress();
+            renderCalendarAndLogs();
+        }
+
+        // Renderiza Calendário Dinâmico e Histórico
+        function renderCalendarAndLogs() {
+            const calContainer = document.getElementById('calendar-container');
+            if(!calContainer) return;
+            
+            // Agrupar tarefas por Data
+            const tasksByDate = {};
+            state.forEach(m => m.tasks.forEach(t => {
+                const activeDate = t.newDate || t.date;
+                const match = activeDate.match(/(\d{2})\/(\d{2})/);
+                if(match) {
+                    const key = `${match[1]}/${match[2]}`;
+                    if(!tasksByDate[key]) tasksByDate[key] = [];
+                    tasksByDate[key].push(t.status);
+                }
+            }));
+
+            // Meses do Projeto (Setembro a Dezembro 2026)
+            const months = [
+                { num: 9, name: "Setembro", days: 30 },
+                { num: 10, name: "Outubro", days: 31 },
+                { num: 11, name: "Novembro", days: 30 },
+                { num: 12, name: "Dezembro", days: 31 }
+            ];
+
+            let calHTML = '';
+            months.forEach(mo => {
+                calHTML += `<div class="mb-4"><h3 class="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wide">${mo.name}</h3><div class="grid grid-cols-7 gap-1">`;
+                for(let d=1; d<=mo.days; d++) {
+                    const dayStr = d.toString().padStart(2, '0');
+                    const moStr = mo.num.toString().padStart(2, '0');
+                    const key = `${dayStr}/${moStr}`;
+                    const tList = tasksByDate[key];
+                    
+                    let bgClass = "bg-slate-50 text-slate-300 border border-slate-100";
+                    if(tList) {
+                        bgClass = "bg-blue-50 text-blue-600 font-bold border border-blue-200 cursor-pointer shadow-sm";
+                        if(tList.includes('delayed')) bgClass = "bg-red-50 text-red-600 font-bold border-red-300 shadow-sm";
+                        else if(tList.includes('rescheduled')) bgClass = "bg-orange-50 text-orange-600 font-bold border-orange-300 shadow-sm";
+                        else if(tList.every(s => s === 'completed_on_time' || s === 'completed_late')) bgClass = "bg-green-50 text-green-600 font-bold border-green-300 shadow-sm";
+                    }
+                    calHTML += `<div class="aspect-square flex items-center justify-center text-[9px] rounded ${bgClass}" title="Data: ${key}">${d}</div>`;
+                }
+                calHTML += `</div></div>`;
+            });
+            calContainer.innerHTML = calHTML;
+
+            // Histórico (Logs)
+            const logsContainer = document.getElementById('logs-container');
+            if(auditLogs.length === 0) {
+                logsContainer.innerHTML = '<p class="text-[10px] text-slate-400 italic bg-slate-50 p-3 rounded border border-slate-100">Nenhum evento reprogramado registrado.</p>';
+            } else {
+                logsContainer.innerHTML = auditLogs.map(l => `
+                    <div class="text-[10px] border-l-2 border-slate-300 pl-2 py-1 mb-2">
+                        <span class="text-slate-400 font-bold block mb-0.5">${l.date}</span>
+                        <span class="text-slate-600">${l.msg}</span>
+                    </div>
+                `).join('');
+            }
         }
 
         window.updateTaskStatus = (meetingId, taskId, newStatus) => {
@@ -551,7 +652,26 @@
         };
 
         window.updateTaskNewDate = (meetingId, taskId, dateVal) => {
-            updateTaskField(meetingId, taskId, 'newDate', dateVal);
+            const meeting = state.find(m => m.id === meetingId);
+            if(meeting) {
+                const task = meeting.tasks.find(t => t.id === taskId);
+                if(task) {
+                    if(dateVal && dateVal !== task.newDate) {
+                        const today = new Date();
+                        const logDate = today.getDate().toString().padStart(2, '0') + '/' + (today.getMonth()+1).toString().padStart(2, '0');
+                        auditLogs.unshift({
+                            id: Date.now(),
+                            date: logDate,
+                            msg: `Ref [${task.code}]: reagendada de ${task.date} para ${dateVal}`
+                        });
+                        if(auditLogs.length > 25) auditLogs.pop(); // Limite histórico
+                    }
+                    task.newDate = dateVal;
+                    sortState();
+                    saveStateToCloud();
+                    if(!isDbConnected) renderMeetings();
+                }
+            }
         };
         
         function updateTaskField(meetingId, taskId, field, value) {
@@ -723,6 +843,7 @@
                 });
             }
             
+            sortState();
             saveStateToCloud();
             if(!isDbConnected) renderMeetings();
             window.closeMeetingModal();
@@ -791,6 +912,7 @@
                 });
             }
 
+            sortState();
             saveStateToCloud();
             if(!isDbConnected) renderMeetings();
             window.closeTaskModal();
