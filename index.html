@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Gestão e Auditoria - Cronograma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Smooth transitions */
+        .task-row { transition: all 0.3s ease; }
+        .checkbox-custom { transition: all 0.2s ease; }
+        
+        /* State styling */
+        .task-completed { background-color: #f0fdf4 !important; border-left-color: #22c55e !important; }
+        .task-delayed { background-color: #fef2f2 !important; border-left-color: #ef4444 !important; }
+        .task-rescheduled { background-color: #fffbeb !important; border-left-color: #f59e0b !important; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-slate-900 text-white z-20 shadow-md flex-shrink-0">
+        <div class="w-full px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Cronograma Oficial de Entregas</h1>
+                <p class="text-slate-400 text-xs mt-0.5">Gestão, Auditoria e Prestação de Contas Semanal • Glicia</p>
+            </div>
+            <button onclick="resetAll()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 py-1.5 px-3 rounded flex items-center gap-2 transition-colors border border-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <span class="hidden sm:inline">Reiniciar</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <!-- SIDEBAR BI (Resumo de Status) -->
+        <aside class="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 overflow-y-auto z-10 flex flex-col">
+            <div class="p-6">
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                    Resumo Executivo
+                </h2>
+
+                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col items-center justify-center mb-6">
+                    <div class="relative w-40 h-40">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <!-- Fundo do Círculo -->
+                            <path class="text-slate-200" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <!-- Barra de Progresso Animada -->
+                            <path id="circle-progress" class="text-blue-500 transition-all duration-1000 ease-out" stroke-dasharray="0, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span id="progress-text-bi" class="text-4xl font-black text-slate-800">0%</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mt-1">Concluído</span>
+                        </div>
+                    </div>
+                    <p class="text-sm font-medium text-slate-500 mt-4 bg-white px-4 py-1.5 rounded-full shadow-sm border border-slate-200">
+                        <span id="total-tasks-bi" class="text-slate-800 font-bold">0</span> tarefas totais mapeadas
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Concluídas -->
+                    <div class="bg-green-50 border border-green-100 rounded-xl p-4 flex flex-col transition-transform hover:scale-[1.02]">
+                        <span class="text-green-600 text-xs font-bold uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Validadas
+                        </span>
+                        <span id="count-completed" class="text-2xl font-black text-green-700">0</span>
+                    </div>
+                    
+                    <!-- Atrasadas -->
+                    <div class="bg-red-50 border border-red-100 rounded-xl p-4 flex flex-col transition-transform hover:scale-[1.02]">
+                        <span class="text-red-500 text-xs font-bold uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Atrasadas
+                        </span>
+                        <span id="count-delayed" class="text-2xl font-black text-red-600">0</span>
+                    </div>
+
+                    <!-- Reprogramadas -->
+                    <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 flex flex-col transition-transform hover:scale-[1.02]">
+                        <span class="text-orange-500 text-xs font-bold uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            Reprogram.
+                        </span>
+                        <span id="count-rescheduled" class="text-2xl font-black text-orange-600">0</span>
+                    </div>
+
+                    <!-- Pendentes -->
+                    <div class="bg-slate-100 border border-slate-200 rounded-xl p-4 flex flex-col transition-transform hover:scale-[1.02]">
+                        <span class="text-slate-500 text-xs font-bold uppercase tracking-wide mb-1 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Pendentes
+                        </span>
+                        <span id="count-pending" class="text-2xl font-black text-slate-600">0</span>
+                    </div>
+                </div>
+                
+                <div class="mt-8 border-t border-slate-200 pt-6 pb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            Performance da Equipe
+                        </h2>
+                        <button id="clear-filter-btn" onclick="toggleAssigneeFilter(null)" class="hidden text-[10px] font-bold bg-slate-200 text-slate-600 hover:bg-slate-300 px-2 py-1 rounded transition-colors shadow-sm">Limpar Filtro</button>
+                    </div>
+                    <div id="assignee-stats-list" class="space-y-3">
+                        <!-- Conteúdo injetado via JS -->
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/50">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-200">
+                    <svg class="text-slate-400" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    <h2 class="text-lg font-bold text-slate-700">Auditoria Detalhada</h2>
+                </div>
+                
+                <div id="meetings-container" class="space-y-6 pb-20">
+                    <!-- As reuniões e tarefas serão injetadas aqui via JavaScript -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Overlay de Carregamento -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
+        <svg class="animate-spin h-10 w-10 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <p class="text-slate-600 font-semibold text-sm">Sincronizando ambiente colaborativo...</p>
+    </div>
+
+    <!-- Modal de Confirmação customizado (Substituindo o "confirm" padrão) -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all">
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Reiniciar Cronograma?</h3>
+            <p class="text-slate-500 text-sm mb-6">Tem certeza que deseja redefinir todas as auditorias? Esta ação limpará os responsáveis, status e datas de todas as tarefas para <b>toda a equipe simultaneamente</b>.</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="window.closeModal()" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
+                <button onclick="window.confirmReset()" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm">Sim, Reiniciar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // =================================================================
+        // 🚨 ATENÇÃO: COLE SUA CONFIGURAÇÃO DO FIREBASE AQUI! 🚨
+        // =================================================================
+        // Substitua o 'null' abaixo pelas chaves que você vai gerar no Passo 2.
+        // Ficará parecido com: { apiKey: "AIzaSy...", authDomain: "...", ... }
+        let minhaChaveFirebase = null; 
+        
+        // =================================================================
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'glicia-auditoria-app';
+        let firebaseConfig = minhaChaveFirebase;
+        
+        // (Lógica de fallback para o ambiente do chat)
+        if (!firebaseConfig) {
+            try {
+                firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            } catch(e) { console.error(e); }
+        }
+
+        let db;
+        let auth;
+        let isDbConnected = false;
+
+        const scheduleData = [
+            {
+                id: "rev-1",
+                date: "14/09 (Segunda-feira)",
+                scope: "Prestação de contas das entregas até 13/09",
+                tasks: [
+                    { id: "t1", date: "12/09", code: "5.1", desc: "Mobilização e diagnóstico", completed: false }
+                ]
+            },
+            {
+                id: "rev-2",
+                date: "21/09 (Segunda-feira)",
+                scope: "Prestação de contas das entregas de 14/09 a 20/09",
+                tasks: [
+                    { id: "t2", date: "14/09", code: "1.2", desc: "Aquisição IA – Empresarial", completed: false },
+                    { id: "t3", date: "14/09", code: "2.1", desc: "Atualizar e implantar política de despesas (Fluxo, responsabilidades, tetos)", completed: false },
+                    { id: "t4", date: "14/09", code: "4.1", desc: "Mapear todas as regras atuais de comissões", completed: false },
+                    { id: "t5", date: "15/09", code: "3.1", desc: "Homologação da base para testagem de novas tabelas", completed: false },
+                    { id: "t6", date: "17/09", code: "3.2", desc: "Mapear os tipos de vendas existentes hoje e preços praticados", completed: false },
+                    { id: "t7", date: "17/09", code: "4.2", desc: "Cruzar comissão × faturamento × margem × recebimento", completed: false },
+                    { id: "t8", date: "17/09", code: "5.6", desc: "Classificação dos clientes ativos (manual)", completed: false },
+                    { id: "t9", date: "17/09", code: "5.7", desc: "Classificação dos clientes inativos", completed: false },
+                    { id: "t10", date: "17/09", code: "7.1", desc: "Diagnóstico: Levantamento dos últimos 12 meses", completed: false }
+                ]
+            },
+            {
+                id: "rev-3",
+                date: "28/09 (Segunda-feira)",
+                scope: "Prestação de contas das entregas de 21/09 a 27/09",
+                tasks: [
+                    { id: "t11", date: "21/09", code: "3.3", desc: "Definir os parâmetros oficiais das novas tabelas", completed: false },
+                    { id: "t12", date: "21/09", code: "4.5", desc: "Replicar política de comissionamento sob resultado (Especialistas)", completed: false },
+                    { id: "t13", date: "23/09", code: "3.4", desc: "Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)", completed: false },
+                    { id: "t14", date: "23/09", code: "6.2", desc: "Atualizar e implantar o fluxo do processo licitatório e de gestão de contratos", completed: false },
+                    { id: "t15", date: "24/09", code: "7.3", desc: "Segmentação: Classificar ABC (Giro, Faturamento, Rentabilidade)", completed: false },
+                    { id: "t16", date: "25/09", code: "4.3", desc: "Simular novos modelos de comissionamento", completed: false }
+                ]
+            },
+            {
+                id: "rev-4",
+                date: "05/10 (Segunda-feira)",
+                scope: "Prestação de contas das entregas de 28/09 a 04/10",
+                tasks: [
+                    { id: "t17", date: "30/09", code: "8.1", desc: "Medir os principais indicadores para identificar desvios e tomar decisões rápidas", completed: false },
+                    { id: "t18", date: "30/09", code: "8.2", desc: "Aquisição BI Empresarial - Grupo Otima", completed: false },
+                    { id: "t19", date: "30/09", code: "10.2", desc: "Desenvolver Instrução de trabalho dos RCA's | Especializada", completed: false },
+                    { id: "t20", date: "30/09", code: "10.3", desc: "Desenvolver Instrução de trabalho das Especializadas", completed: false },
+                    { id: "t21", date: "01/10", code: "7.4", desc: "Redefinir Estoque Mínimo e Ideal (por Filial), cobertura por perfil de SKU", completed: false },
+                    { id: "t22", date: "04/10", code: "10.1", desc: "Garantir cumprimento do pilar 6", completed: false }
+                ]
+            },
+            {
+                id: "rev-5",
+                date: "12/10 (Segunda-feira)",
+                scope: "Prestação de contas das entregas de 05/10 a 11/10",
+                tasks: [
+                    { id: "t23", date: "07/10", code: "2.2", desc: "Revisar contas gerenciais", completed: false },
+                    { id: "t24", date: "07/10", code: "2.3", desc: "Reclassificação de despesas por centro de custo", completed: false },
+                    { id: "t25", date: "09/10", code: "5.5", desc: "Plano de ação, ajustes e expansão", completed: false },
+                    { id: "t26", date: "10/10", code: "5.2", desc: "Saneamento do banco e mapeamento Winthor", completed: false },
+                    { id: "t27", date: "10/10", code: "7.5", desc: "Criar Plano de Ação com Comercial/Marketing com os produtos parados", completed: false }
+                ]
+            },
+            {
+                id: "rev-6",
+                date: "26/10 (Segunda-feira)",
+                scope: "Prestação de contas das entregas de 19/10 a 25/10",
+                tasks: [
+                    { id: "t28", date: "19/10", code: "5.3", desc: "Cruzamento e modelo", completed: false },
+                    { id: "t29", date: "19/10", code: "7.6", desc: "Criar política de Auditoria em compras (acompanhamento de pedidos, leadtime, etc)", completed: false }
+                ]
+            },
+            {
+                id: "rev-7",
+                date: "09/11 (Segunda-feira)",
+                scope: "Prestação de contas das entregas do início de Novembro até 08/11",
+                tasks: [
+                    { id: "t30", date: "03/11", code: "7.7", desc: "Desenvolver indicadores e estruturar dashboard", completed: false },
+                    { id: "t31", date: "07/11", code: "5.4", desc: "BI e homologação", completed: false },
+                    { id: "t32", date: "07/11", code: "5.5", desc: "Plano de ação, ajustes e expansão", completed: false },
+                    { id: "t33", date: "07/11", code: "5.6", desc: "Classificação dos clientes Ativos (Manual)", completed: false },
+                    { id: "t34", date: "07/11", code: "5.7", desc: "Classificação dos clientes Inativos", completed: false },
+                    { id: "t35", date: "07/11", code: "5.8", desc: "Desenvolver um BI - Monitoramento", completed: false }
+                ]
+            },
+            {
+                id: "rev-8",
+                date: "07/12 (Segunda-feira)",
+                scope: "Prestação de contas das entregas de final de novembro",
+                tasks: [
+                    { id: "t36", date: "30/11", code: "3.4", desc: "Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)", completed: false },
+                    { id: "t37", date: "30/11", code: "3.5", desc: "Corrigir distorções", completed: false },
+                    { id: "t38", date: "30/11", code: "3.6", desc: "Criar relatórios", completed: false }
+                ]
+            },
+            {
+                id: "rev-9",
+                date: "14/12 (Segunda-feira)",
+                scope: "Prestação de contas das entregas de 07/12 a 13/12",
+                tasks: [
+                    { id: "t39", date: "07/12", code: "9.1", desc: "Garantir que clientes, produtos, canais e operações gerem resultado sustentável", completed: false }
+                ]
+            },
+            {
+                id: "rev-10",
+                date: "21/12 (Segunda-feira)",
+                scope: "Prestação de contas das entregas de 14/12 a 20/12",
+                tasks: [
+                    { id: "t40", date: "19/12", code: "7.2", desc: "Saneamento: Validar cadastros, SKU, ABC, Estoque sem giro, Cobertura", completed: false },
+                    { id: "t41", date: "19/12", code: "7.8", desc: "Governança - Reuniões semanais para tratamento de indicadores", completed: false }
+                ]
+            }
+        ];
+
+        let state = [...scheduleData];
+        let currentFilterAssignee = null;
+
+        // Pré-preenche propriedades que vão interagir com o BD
+        state.forEach(m => m.tasks.forEach(t => {
+            t.status = t.completed ? 'completed' : 'pending';
+            t.assignee = '';
+            t.newDate = '';
+        }));
+
+        async function initCloudSync() {
+            if(!firebaseConfig) {
+                console.log("Executando em modo local (sem config de banco).");
+                finishLoading();
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Autenticação Obrigatória antes de consultas (garantindo acesso seguro)
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                if(auth.currentUser) {
+                    isDbConnected = true;
+                    listenToUpdates(); // Inicia Sincronização Real-time
+                }
+            } catch(e) {
+                console.error("Erro na conexão com Banco de Dados:", e);
+                finishLoading(); // Libera interface em caso de falha para uso local
+            }
+        }
+
+        function listenToUpdates() {
+            // Regra Obrigatória: Usando estrutura publica estrita de coleção
+            const tasksRef = collection(db, 'artifacts', appId, 'public', 'data', 'tasks');
+            
+            // onSnapshot com tratamento de erro
+            onSnapshot(tasksRef, (snapshot) => {
+                const cloudData = {};
+                snapshot.forEach(doc => {
+                    cloudData[doc.id] = doc.data();
+                });
+
+                // Atualizando estado local com dados da nuvem
+                state.forEach(m => m.tasks.forEach(t => {
+                    if (cloudData[t.id]) {
+                        t.status = cloudData[t.id].status || 'pending';
+                        t.completed = (t.status === 'completed');
+                        t.assignee = cloudData[t.id].assignee || '';
+                        t.newDate = cloudData[t.id].newDate || '';
+                    }
+                }));
+
+                renderMeetings();
+                finishLoading();
+            }, (error) => {
+                console.error("Erro no sincronismo ao vivo: ", error);
+                finishLoading();
+            });
+        }
+
+        async function updateTaskInDb(taskId, updates) {
+            if (!isDbConnected || !auth.currentUser) return;
+            const taskRef = doc(db, 'artifacts', appId, 'public', 'data', 'tasks', taskId);
+            try {
+                await setDoc(taskRef, updates, { merge: true });
+            } catch (error) {
+                console.error("Erro ao salvar dado na nuvem: ", error);
+            }
+        }
+
+        function finishLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        function renderMeetings() {
+            const container = document.getElementById('meetings-container');
+            container.innerHTML = '';
+
+            state.forEach((meeting) => {
+                const visibleTasks = meeting.tasks.filter(t => !currentFilterAssignee || t.assignee.trim().toLowerCase() === currentFilterAssignee);
+                
+                if (visibleTasks.length === 0) return; 
+
+                const meetingCard = document.createElement('div');
+                meetingCard.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6";
+                
+                const totalMTasks = visibleTasks.length;
+                const completedMTasks = visibleTasks.filter(t => t.status === 'completed').length;
+                const isMeetingComplete = totalMTasks === completedMTasks && totalMTasks > 0;
+
+                const header = document.createElement('div');
+                header.className = `p-5 border-b border-slate-100 flex justify-between items-center transition-colors ${isMeetingComplete ? 'bg-green-50' : 'bg-slate-50'}`;
+                header.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-bold text-slate-800">Reunião: ${meeting.date}</h3>
+                            ${isMeetingComplete ? '<span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Auditado</span>' : ''}
+                        </div>
+                        <p class="text-sm text-slate-500 mt-1">Pauta: ${meeting.scope}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-medium ${isMeetingComplete ? 'text-green-600' : 'text-slate-500'}">
+                            ${completedMTasks} / ${totalMTasks} concluídas
+                        </span>
+                    </div>
+                `;
+                meetingCard.appendChild(header);
+
+                const taskList = document.createElement('div');
+                taskList.className = "divide-y divide-slate-100";
+
+                meeting.tasks.forEach((task) => {
+                    if (currentFilterAssignee && task.assignee.trim().toLowerCase() !== currentFilterAssignee) return;
+
+                    const taskRow = document.createElement('div');
+                    
+                    let statusClass = "border-transparent";
+                    let bgClass = "hover:bg-slate-50";
+                    let selectBg = "bg-slate-100 text-slate-600 border-slate-200";
+                    
+                    if (task.status === 'completed') {
+                        statusClass = "border-green-500 task-completed";
+                        bgClass = "bg-green-50/50";
+                        selectBg = "bg-green-100 text-green-700 border-green-200";
+                    } else if (task.status === 'delayed') {
+                        statusClass = "border-red-500 task-delayed";
+                        bgClass = "bg-red-50/50 hover:bg-red-50";
+                        selectBg = "bg-red-100 text-red-700 border-red-200";
+                    } else if (task.status === 'rescheduled') {
+                        statusClass = "border-orange-500 task-rescheduled";
+                        bgClass = "bg-orange-50/50 hover:bg-orange-50";
+                        selectBg = "bg-orange-100 text-orange-700 border-orange-200";
+                    }
+
+                    taskRow.className = `task-row p-4 flex flex-col sm:flex-row items-start gap-4 border-l-4 ${statusClass} ${bgClass}`;
+                    
+                    // Modificamos a injeção dos eventos onClick/onChange para acessar funções globais(window) usando ID
+                    taskRow.innerHTML = `
+                        <div class="flex-1 w-full">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-200">Prazo Original: ${task.date}</span>
+                                <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded">Ref: ${task.code}</span>
+                                
+                                <select onchange="window.updateTaskStatus('${task.id}', this.value)" class="text-xs font-bold px-2 py-1 rounded border outline-none cursor-pointer ${selectBg}">
+                                    <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>⏱ Pendente</option>
+                                    <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Concluído</option>
+                                    <option value="delayed" ${task.status === 'delayed' ? 'selected' : ''}>🚨 Atrasado</option>
+                                    <option value="rescheduled" ${task.status === 'rescheduled' ? 'selected' : ''}>📅 Reprogramado</option>
+                                </select>
+                                
+                                ${task.status === 'rescheduled' ? `
+                                    <div class="flex items-center gap-1 bg-white border border-orange-200 rounded px-2 py-0.5 shadow-sm">
+                                        <span class="text-xs text-orange-600 font-medium">Nova data:</span>
+                                        <input type="date" value="${task.newDate}" onchange="window.updateTaskNewDate('${task.id}', this.value)" class="text-xs outline-none bg-transparent text-slate-700">
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <p class="text-sm font-medium mb-3 ${task.status === 'completed' ? 'text-slate-400 line-through' : 'text-slate-800'}">${task.desc}</p>
+                            
+                            <div class="flex items-center gap-2 bg-white/80 p-2 rounded-md border border-slate-200 inline-flex shadow-sm">
+                                <svg class="w-4 h-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                <input type="text" placeholder="Atribuir responsável..." value="${task.assignee}" onblur="window.updateTaskAssignee('${task.id}', this.value)" onkeyup="if(event.key === 'Enter') this.blur()" class="text-sm bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none w-56 py-0.5 placeholder-slate-400 text-slate-700 transition-colors">
+                            </div>
+                        </div>
+                    `;
+                    taskList.appendChild(taskRow);
+                });
+
+                meetingCard.appendChild(taskList);
+                container.appendChild(meetingCard);
+            });
+
+            updateProgress();
+        }
+
+        window.updateTaskStatus = (taskId, newStatus) => {
+            // Em modo offline atualiza local. Em modo online envia pro banco (que aciona re-render)
+            if(isDbConnected) {
+                updateTaskInDb(taskId, { status: newStatus });
+            } else {
+                updateLocalTask(taskId, { status: newStatus, completed: (newStatus === 'completed') });
+            }
+        };
+
+        window.updateTaskAssignee = (taskId, assigneeName) => {
+            if(isDbConnected) {
+                updateTaskInDb(taskId, { assignee: assigneeName });
+            } else {
+                updateLocalTask(taskId, { assignee: assigneeName });
+            }
+        };
+
+        window.updateTaskNewDate = (taskId, dateVal) => {
+            if(isDbConnected) {
+                updateTaskInDb(taskId, { newDate: dateVal });
+            } else {
+                updateLocalTask(taskId, { newDate: dateVal });
+            }
+        };
+        
+        function updateLocalTask(taskId, updates) {
+            state.forEach(m => m.tasks.forEach(t => {
+                if(t.id === taskId) {
+                    Object.assign(t, updates);
+                }
+            }));
+            renderMeetings();
+        }
+
+        function updateProgress() {
+            let total = 0;
+            let completed = 0;
+            let delayed = 0;
+            let rescheduled = 0;
+            let pending = 0;
+
+            state.forEach(meeting => {
+                meeting.tasks.forEach(task => {
+                    total++;
+                    if(task.status === 'completed') completed++;
+                    else if(task.status === 'delayed') delayed++;
+                    else if(task.status === 'rescheduled') rescheduled++;
+                    else pending++;
+                });
+            });
+
+            document.getElementById('count-completed').innerText = completed;
+            document.getElementById('count-delayed').innerText = delayed;
+            document.getElementById('count-rescheduled').innerText = rescheduled;
+            document.getElementById('count-pending').innerText = pending;
+            document.getElementById('total-tasks-bi').innerText = total;
+
+            const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+            document.getElementById('circle-progress').setAttribute('stroke-dasharray', `${percentage}, 100`);
+            document.getElementById('progress-text-bi').innerText = `${percentage}%`;
+            
+            if(percentage === 100) {
+                document.getElementById('circle-progress').classList.remove('text-blue-500');
+                document.getElementById('circle-progress').classList.add('text-green-500');
+            } else {
+                document.getElementById('circle-progress').classList.add('text-blue-500');
+                document.getElementById('circle-progress').classList.remove('text-green-500');
+            }
+
+            renderAssigneeStats();
+        }
+
+        window.toggleAssigneeFilter = (assigneeKey) => {
+            if (currentFilterAssignee === assigneeKey) {
+                currentFilterAssignee = null;
+            } else {
+                currentFilterAssignee = assigneeKey;
+            }
+            
+            const clearBtn = document.getElementById('clear-filter-btn');
+            if (currentFilterAssignee) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            renderMeetings();
+        };
+
+        function renderAssigneeStats() {
+            const container = document.getElementById('assignee-stats-list');
+            container.innerHTML = '';
+            
+            const stats = {};
+            state.forEach(meeting => {
+                meeting.tasks.forEach(task => {
+                    let assignee = task.assignee.trim();
+                    if (assignee) {
+                        let key = assignee.toLowerCase();
+                        if (!stats[key]) {
+                            stats[key] = { name: assignee, key: key, total: 0, completed: 0, delayed: 0 };
+                        }
+                        stats[key].total++;
+                        if (task.status === 'completed') stats[key].completed++;
+                        if (task.status === 'delayed') stats[key].delayed++;
+                    }
+                });
+            });
+
+            const statsArray = Object.values(stats).sort((a, b) => b.total - a.total);
+
+            if(statsArray.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-lg border border-slate-100">Nenhum responsável atribuído.<br/>Atribua tarefas para ativar a análise.</p>';
+                return;
+            }
+
+            statsArray.forEach(stat => {
+                const percent = stat.total === 0 ? 0 : Math.round((stat.completed / stat.total) * 100);
+                const isSelected = currentFilterAssignee === stat.key;
+                
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-lg border cursor-pointer transition-all ${isSelected ? 'bg-blue-50 border-blue-300 shadow-sm transform scale-[1.02]' : 'bg-white border-slate-200 hover:border-blue-400 hover:shadow-sm'}`;
+                div.onclick = () => window.toggleAssigneeFilter(stat.key);
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="text-sm font-bold ${isSelected ? 'text-blue-800' : 'text-slate-700'}">${stat.name}</span>
+                        <span class="text-xs font-black ${percent === 100 ? 'text-green-600' : 'text-slate-600'}">${percent}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                        <div class="bg-${percent === 100 ? 'green' : 'blue'}-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                        <span>${stat.completed}/${stat.total} entregas</span>
+                        ${stat.delayed > 0 ? `<span class="text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded">${stat.delayed} atraso(s)</span>` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.resetAll = () => {
+            document.getElementById('custom-modal').classList.remove('hidden');
+        };
+
+        window.closeModal = () => {
+            document.getElementById('custom-modal').classList.add('hidden');
+        };
+
+        window.confirmReset = async () => {
+            window.closeModal();
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('loading-overlay').style.opacity = '1';
+
+            if(isDbConnected) {
+                // Batch write para limpar todas as tarefas na nuvem rapidamente
+                const batch = writeBatch(db);
+                state.forEach(m => m.tasks.forEach(t => {
+                    const taskRef = doc(db, 'artifacts', appId, 'public', 'data', 'tasks', t.id);
+                    batch.set(taskRef, { status: 'pending', assignee: '', newDate: '' }, { merge: true });
+                }));
+                try {
+                    await batch.commit();
+                    // onSnapshot cuidará do re-render da tela após apagar.
+                } catch(e) {
+                    console.error("Erro ao limpar dados na nuvem: ", e);
+                    finishLoading();
+                }
+            } else {
+                // Limpeza apenas local (offline)
+                state.forEach(m => m.tasks.forEach(t => {
+                    t.status = 'pending';
+                    t.completed = false;
+                    t.assignee = '';
+                    t.newDate = '';
+                }));
+                renderMeetings();
+                finishLoading();
+            }
+        };
+
+        // Inicializar aplicação
+        window.onload = () => {
+            renderMeetings(); // Renderiza vazio para evitar tela em branco
+            initCloudSync(); // Inicia conexão
+        };
+    </script>
+</body>
+</html>
