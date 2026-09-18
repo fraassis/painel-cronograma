@@ -9,42 +9,50 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         
-        /* Custom scrollbar for better aesthetics */
-        ::-webkit-scrollbar { width: 8px; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         /* Smooth transitions */
         .task-row { transition: all 0.3s ease; }
-        .checkbox-custom { transition: all 0.2s ease; }
         
         /* State styling */
         .task-completed { background-color: #f0fdf4 !important; border-left-color: #22c55e !important; }
+        .task-completed-late { background-color: #f0fdfa !important; border-left-color: #14b8a6 !important; }
         .task-delayed { background-color: #fef2f2 !important; border-left-color: #ef4444 !important; }
         .task-rescheduled { background-color: #fffbeb !important; border-left-color: #f59e0b !important; }
+
+        /* Animação para os botões do Orquestrador */
+        .admin-element { display: none; }
+        .admin-mode-active .admin-element { display: inline-flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <header class="bg-slate-900 text-white z-20 shadow-md flex-shrink-0">
-        <div class="w-full px-4 py-4 flex justify-between items-center">
+    <header class="bg-slate-900 text-white z-50 shadow-md flex-shrink-0 sticky top-0">
+        <div class="w-full px-4 py-4 flex flex-wrap justify-between items-center gap-3">
             <div>
                 <h1 class="text-xl font-bold tracking-tight">Cronograma Oficial de Entregas</h1>
                 <p class="text-slate-400 text-xs mt-0.5">Gestão, Auditoria e Prestação de Contas Semanal • Glicia</p>
             </div>
-            <button onclick="resetAll()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 py-1.5 px-3 rounded flex items-center gap-2 transition-colors border border-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                <span class="hidden sm:inline">Reiniciar</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <!-- Botão Orquestrador -->
+                <button onclick="window.requestAdminAccess()" id="btn-admin-login" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 py-1.5 px-3 rounded flex items-center gap-2 transition-colors border border-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span class="hidden sm:inline" id="admin-status-text">Orquestrador</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+    <div class="flex-1 flex flex-col md:flex-row items-stretch">
         
         <!-- SIDEBAR BI (Resumo de Status) -->
-        <aside class="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 overflow-y-auto z-10 flex flex-col">
-            <div class="p-6">
+        <aside class="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 z-10 flex flex-col">
+            <div class="p-6 md:sticky md:top-[72px]">
                 <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
                     Resumo Executivo
@@ -53,9 +61,7 @@
                 <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col items-center justify-center mb-6">
                     <div class="relative w-40 h-40">
                         <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                            <!-- Fundo do Círculo -->
                             <path class="text-slate-200" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <!-- Barra de Progresso Animada -->
                             <path id="circle-progress" class="text-blue-500 transition-all duration-1000 ease-out" stroke-dasharray="0, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         </svg>
                         <div class="absolute inset-0 flex flex-col items-center justify-center">
@@ -68,45 +74,30 @@
                     </p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-3 mb-8">
                     <!-- Concluídas -->
-                    <div class="bg-green-50 border border-green-100 rounded-xl p-4 flex flex-col transition-transform hover:scale-[1.02]">
-                        <span class="text-green-600 text-xs font-bold uppercase tracking-wide mb-1 flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            Validadas
-                        </span>
-                        <span id="count-completed" class="text-2xl font-black text-green-700">0</span>
+                    <div class="bg-green-50 border border-green-100 rounded-xl p-3 flex flex-col">
+                        <span class="text-green-600 text-[10px] font-bold uppercase tracking-wide mb-1">Validadas</span>
+                        <span id="count-completed" class="text-xl font-black text-green-700">0</span>
                     </div>
-                    
                     <!-- Atrasadas -->
-                    <div class="bg-red-50 border border-red-100 rounded-xl p-4 flex flex-col transition-transform hover:scale-[1.02]">
-                        <span class="text-red-500 text-xs font-bold uppercase tracking-wide mb-1 flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            Atrasadas
-                        </span>
-                        <span id="count-delayed" class="text-2xl font-black text-red-600">0</span>
+                    <div class="bg-red-50 border border-red-100 rounded-xl p-3 flex flex-col">
+                        <span class="text-red-500 text-[10px] font-bold uppercase tracking-wide mb-1">Atrasadas</span>
+                        <span id="count-delayed" class="text-xl font-black text-red-600">0</span>
                     </div>
-
                     <!-- Reprogramadas -->
-                    <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 flex flex-col transition-transform hover:scale-[1.02]">
-                        <span class="text-orange-500 text-xs font-bold uppercase tracking-wide mb-1 flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                            Reprogram.
-                        </span>
-                        <span id="count-rescheduled" class="text-2xl font-black text-orange-600">0</span>
+                    <div class="bg-orange-50 border border-orange-100 rounded-xl p-3 flex flex-col">
+                        <span class="text-orange-500 text-[10px] font-bold uppercase tracking-wide mb-1">Reprogram.</span>
+                        <span id="count-rescheduled" class="text-xl font-black text-orange-600">0</span>
                     </div>
-
                     <!-- Pendentes -->
-                    <div class="bg-slate-100 border border-slate-200 rounded-xl p-4 flex flex-col transition-transform hover:scale-[1.02]">
-                        <span class="text-slate-500 text-xs font-bold uppercase tracking-wide mb-1 flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            Pendentes
-                        </span>
-                        <span id="count-pending" class="text-2xl font-black text-slate-600">0</span>
+                    <div class="bg-slate-100 border border-slate-200 rounded-xl p-3 flex flex-col">
+                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wide mb-1">Pendentes</span>
+                        <span id="count-pending" class="text-xl font-black text-slate-600">0</span>
                     </div>
                 </div>
-                
-                <div class="mt-8 border-t border-slate-200 pt-6 pb-4">
+
+                <div class="border-t border-slate-200 pt-6 pb-4">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -114,18 +105,25 @@
                         </h2>
                         <button id="clear-filter-btn" onclick="toggleAssigneeFilter(null)" class="hidden text-[10px] font-bold bg-slate-200 text-slate-600 hover:bg-slate-300 px-2 py-1 rounded transition-colors shadow-sm">Limpar Filtro</button>
                     </div>
-                    <div id="assignee-stats-list" class="space-y-3">
+                    <div id="assignee-stats-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
                         <!-- Conteúdo injetado via JS -->
                     </div>
                 </div>
             </div>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/50">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex items-center gap-3 mb-6 pb-2 border-b border-slate-200">
-                    <svg class="text-slate-400" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                    <h2 class="text-lg font-bold text-slate-700">Auditoria Detalhada</h2>
+        <main class="flex-1 p-4 md:p-8 bg-slate-50/50">
+            <div class="max-w-4xl mx-auto" id="app-container">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-2 border-b border-slate-200">
+                    <div class="flex items-center gap-3">
+                        <svg class="text-slate-400" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        <h2 class="text-lg font-bold text-slate-700">Auditoria Detalhada</h2>
+                    </div>
+                    <!-- Botão de Criar Novo Ciclo (Apenas Admin) -->
+                    <button onclick="window.openMeetingModal()" class="admin-element text-sm bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-4 rounded-lg items-center gap-2 font-medium shadow-sm transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Novo Ciclo / Reunião
+                    </button>
                 </div>
                 
                 <div id="meetings-container" class="space-y-6 pb-20">
@@ -141,242 +139,163 @@
         <p class="text-slate-600 font-semibold text-sm">Sincronizando ambiente colaborativo...</p>
     </div>
 
-    <!-- Modal de Confirmação customizado (Substituindo o "confirm" padrão) -->
-    <div id="custom-modal" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm transition-opacity">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all">
-            <h3 class="text-xl font-bold text-slate-800 mb-2">Reiniciar Cronograma?</h3>
-            <p class="text-slate-500 text-sm mb-6">Tem certeza que deseja redefinir todas as auditorias? Esta ação limpará os responsáveis, status e datas de todas as tarefas para <b>toda a equipe simultaneamente</b>.</p>
-            <div class="flex justify-end gap-3">
-                <button onclick="window.closeModal()" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                <button onclick="window.confirmReset()" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm">Sim, Reiniciar</button>
+    <!-- Modal Orquestrador (Senha) -->
+    <div id="modal-auth" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full transform transition-all">
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Acesso Restrito</h3>
+            <p class="text-slate-500 text-xs mb-4">Insira a senha do orquestrador para adicionar ou editar a estrutura do cronograma.</p>
+            <input type="password" id="admin-password-input" placeholder="Senha Mestra" class="w-full border border-slate-300 rounded-lg px-3 py-2 mb-4 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <div id="auth-error" class="hidden text-red-500 text-xs font-bold mb-4">Senha incorreta.</div>
+            <div class="flex justify-end gap-2">
+                <button onclick="window.closeAuthModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
+                <button onclick="window.verifyAdmin()" class="px-4 py-2 rounded-lg text-sm font-bold bg-slate-800 text-white hover:bg-slate-900 shadow-sm">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Tarefa (Adicionar/Editar) -->
+    <div id="modal-task" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full transform transition-all">
+            <h3 id="modal-task-title" class="text-lg font-bold text-slate-800 mb-4">Adicionar Tarefa</h3>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Data (Ex: 15/09)</label>
+                        <input type="text" id="task-input-date" placeholder="DD/MM" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Referência (Ex: 4.1)</label>
+                        <input type="text" id="task-input-code" placeholder="Cód." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Descrição da Entrega</label>
+                    <textarea id="task-input-desc" rows="3" placeholder="Descreva o que precisa ser feito..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 resize-none"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100">
+                <button id="btn-delete-task" onclick="window.confirmDeleteTask()" class="hidden px-3 py-2 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> Excluir
+                </button>
+                <div class="flex gap-2 ml-auto">
+                    <button onclick="window.closeTaskModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
+                    <button onclick="window.saveTaskData()" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Reunião (Adicionar/Editar) -->
+    <div id="modal-meeting" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full transform transition-all">
+            <h3 id="modal-meeting-title" class="text-lg font-bold text-slate-800 mb-4">Nova Reunião / Ciclo</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Título da Reunião (Ex: 05/10 - Segunda-feira)</label>
+                    <input type="text" id="meeting-input-date" placeholder="Título/Data" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Pauta / Escopo do Ciclo</label>
+                    <textarea id="meeting-input-scope" rows="2" placeholder="Prestação de contas das entregas de..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 resize-none"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end items-center mt-6 pt-4 border-t border-slate-100 gap-2">
+                <button onclick="window.closeMeetingModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
+                <button onclick="window.saveMeetingData()" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm">Salvar Reunião</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // =================================================================
-        // 🚨 ATENÇÃO: COLE SUA CONFIGURAÇÃO DO FIREBASE AQUI! 🚨
-        // =================================================================
-        // Substitua o 'null' abaixo pelas chaves que você vai gerar no Passo 2.
-        // Ficará parecido com: { apiKey: "AIzaSy...", authDomain: "...", ... }
-        let minhaChaveFirebase = {
-          apiKey: "AIzaSyD-YEtxZkGOA4tuleo2zkRxBLOFXWYJ2ko",
-          authDomain: "cronogramaotimaaudit.firebaseapp.com",
-          projectId: "cronogramaotimaaudit",
-          storageBucket: "cronogramaotimaaudit.firebasestorage.app",
-          messagingSenderId: "421525034998",
-          appId: "1:421525034998:web:3144f96888ea4be39fd9d7"
-        }; 
-        
-        // =================================================================
+        // SUA CHAVE EXATA:
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-YEtxZkGOA4tuleo2zkRxBLOFXWYJ2ko",
+            authDomain: "cronogramaotimaaudit.firebaseapp.com",
+            projectId: "cronogramaotimaaudit",
+            storageBucket: "cronogramaotimaaudit.firebasestorage.app",
+            messagingSenderId: "421525034998",
+            appId: "1:421525034998:web:3144f96888ea4be39fd9d7"
+        };
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'glicia-auditoria-app';
-        let firebaseConfig = minhaChaveFirebase;
-        
-        // (Lógica de fallback para o ambiente do chat)
-        if (!firebaseConfig) {
-            try {
-                firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-            } catch(e) { console.error(e); }
-        }
-
-        let db;
-        let auth;
+        const appId = 'glicia-auditoria'; // Identificador único na nuvem
+        let db, auth;
         let isDbConnected = false;
 
-        const scheduleData = [
+        // Estado Global Dinâmico
+        let state = [];
+        let currentFilterAssignee = null;
+        let isAdmin = false;
+        
+        // Variáveis de controle para os modais
+        let currentEditingMeetingId = null;
+        let currentEditingTaskId = null;
+
+        // Dados padrão caso o banco esteja vazio na primeira vez
+        const defaultInitialData = [
             {
-                id: "rev-1",
-                date: "14/09 (Segunda-feira)",
-                scope: "Prestação de contas das entregas até 13/09",
-                tasks: [
-                    { id: "t1", date: "12/09", code: "5.1", desc: "Mobilização e diagnóstico", completed: false }
-                ]
-            },
-            {
-                id: "rev-2",
-                date: "21/09 (Segunda-feira)",
-                scope: "Prestação de contas das entregas de 14/09 a 20/09",
-                tasks: [
-                    { id: "t2", date: "14/09", code: "1.2", desc: "Aquisição IA – Empresarial", completed: false },
-                    { id: "t3", date: "14/09", code: "2.1", desc: "Atualizar e implantar política de despesas (Fluxo, responsabilidades, tetos)", completed: false },
-                    { id: "t4", date: "14/09", code: "4.1", desc: "Mapear todas as regras atuais de comissões", completed: false },
-                    { id: "t5", date: "15/09", code: "3.1", desc: "Homologação da base para testagem de novas tabelas", completed: false },
-                    { id: "t6", date: "17/09", code: "3.2", desc: "Mapear os tipos de vendas existentes hoje e preços praticados", completed: false },
-                    { id: "t7", date: "17/09", code: "4.2", desc: "Cruzar comissão × faturamento × margem × recebimento", completed: false },
-                    { id: "t8", date: "17/09", code: "5.6", desc: "Classificação dos clientes ativos (manual)", completed: false },
-                    { id: "t9", date: "17/09", code: "5.7", desc: "Classificação dos clientes inativos", completed: false },
-                    { id: "t10", date: "17/09", code: "7.1", desc: "Diagnóstico: Levantamento dos últimos 12 meses", completed: false }
-                ]
-            },
-            {
-                id: "rev-3",
-                date: "28/09 (Segunda-feira)",
-                scope: "Prestação de contas das entregas de 21/09 a 27/09",
-                tasks: [
-                    { id: "t11", date: "21/09", code: "3.3", desc: "Definir os parâmetros oficiais das novas tabelas", completed: false },
-                    { id: "t12", date: "21/09", code: "4.5", desc: "Replicar política de comissionamento sob resultado (Especialistas)", completed: false },
-                    { id: "t13", date: "23/09", code: "3.4", desc: "Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)", completed: false },
-                    { id: "t14", date: "23/09", code: "6.2", desc: "Atualizar e implantar o fluxo do processo licitatório e de gestão de contratos", completed: false },
-                    { id: "t15", date: "24/09", code: "7.3", desc: "Segmentação: Classificar ABC (Giro, Faturamento, Rentabilidade)", completed: false },
-                    { id: "t16", date: "25/09", code: "4.3", desc: "Simular novos modelos de comissionamento", completed: false }
-                ]
-            },
-            {
-                id: "rev-4",
-                date: "05/10 (Segunda-feira)",
-                scope: "Prestação de contas das entregas de 28/09 a 04/10",
-                tasks: [
-                    { id: "t17", date: "30/09", code: "8.1", desc: "Medir os principais indicadores para identificar desvios e tomar decisões rápidas", completed: false },
-                    { id: "t18", date: "30/09", code: "8.2", desc: "Aquisição BI Empresarial - Grupo Otima", completed: false },
-                    { id: "t19", date: "30/09", code: "10.2", desc: "Desenvolver Instrução de trabalho dos RCA's | Especializada", completed: false },
-                    { id: "t20", date: "30/09", code: "10.3", desc: "Desenvolver Instrução de trabalho das Especializadas", completed: false },
-                    { id: "t21", date: "01/10", code: "7.4", desc: "Redefinir Estoque Mínimo e Ideal (por Filial), cobertura por perfil de SKU", completed: false },
-                    { id: "t22", date: "04/10", code: "10.1", desc: "Garantir cumprimento do pilar 6", completed: false }
-                ]
-            },
-            {
-                id: "rev-5",
-                date: "12/10 (Segunda-feira)",
-                scope: "Prestação de contas das entregas de 05/10 a 11/10",
-                tasks: [
-                    { id: "t23", date: "07/10", code: "2.2", desc: "Revisar contas gerenciais", completed: false },
-                    { id: "t24", date: "07/10", code: "2.3", desc: "Reclassificação de despesas por centro de custo", completed: false },
-                    { id: "t25", date: "09/10", code: "5.5", desc: "Plano de ação, ajustes e expansão", completed: false },
-                    { id: "t26", date: "10/10", code: "5.2", desc: "Saneamento do banco e mapeamento Winthor", completed: false },
-                    { id: "t27", date: "10/10", code: "7.5", desc: "Criar Plano de Ação com Comercial/Marketing com os produtos parados", completed: false }
-                ]
-            },
-            {
-                id: "rev-6",
-                date: "26/10 (Segunda-feira)",
-                scope: "Prestação de contas das entregas de 19/10 a 25/10",
-                tasks: [
-                    { id: "t28", date: "19/10", code: "5.3", desc: "Cruzamento e modelo", completed: false },
-                    { id: "t29", date: "19/10", code: "7.6", desc: "Criar política de Auditoria em compras (acompanhamento de pedidos, leadtime, etc)", completed: false }
-                ]
-            },
-            {
-                id: "rev-7",
-                date: "09/11 (Segunda-feira)",
-                scope: "Prestação de contas das entregas do início de Novembro até 08/11",
-                tasks: [
-                    { id: "t30", date: "03/11", code: "7.7", desc: "Desenvolver indicadores e estruturar dashboard", completed: false },
-                    { id: "t31", date: "07/11", code: "5.4", desc: "BI e homologação", completed: false },
-                    { id: "t32", date: "07/11", code: "5.5", desc: "Plano de ação, ajustes e expansão", completed: false },
-                    { id: "t33", date: "07/11", code: "5.6", desc: "Classificação dos clientes Ativos (Manual)", completed: false },
-                    { id: "t34", date: "07/11", code: "5.7", desc: "Classificação dos clientes Inativos", completed: false },
-                    { id: "t35", date: "07/11", code: "5.8", desc: "Desenvolver um BI - Monitoramento", completed: false }
-                ]
-            },
-            {
-                id: "rev-8",
-                date: "07/12 (Segunda-feira)",
-                scope: "Prestação de contas das entregas de final de novembro",
-                tasks: [
-                    { id: "t36", date: "30/11", code: "3.4", desc: "Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)", completed: false },
-                    { id: "t37", date: "30/11", code: "3.5", desc: "Corrigir distorções", completed: false },
-                    { id: "t38", date: "30/11", code: "3.6", desc: "Criar relatórios", completed: false }
-                ]
-            },
-            {
-                id: "rev-9",
-                date: "14/12 (Segunda-feira)",
-                scope: "Prestação de contas das entregas de 07/12 a 13/12",
-                tasks: [
-                    { id: "t39", date: "07/12", code: "9.1", desc: "Garantir que clientes, produtos, canais e operações gerem resultado sustentável", completed: false }
-                ]
-            },
-            {
-                id: "rev-10",
-                date: "21/12 (Segunda-feira)",
-                scope: "Prestação de contas das entregas de 14/12 a 20/12",
-                tasks: [
-                    { id: "t40", date: "19/12", code: "7.2", desc: "Saneamento: Validar cadastros, SKU, ABC, Estoque sem giro, Cobertura", completed: false },
-                    { id: "t41", date: "19/12", code: "7.8", desc: "Governança - Reuniões semanais para tratamento de indicadores", completed: false }
-                ]
+                id: "rev-1", date: "14/09 (Segunda-feira)", scope: "Prestação de contas das entregas até 13/09",
+                tasks: [{ id: "t1", date: "12/09", code: "5.1", desc: "Mobilização e diagnóstico", status: "pending", assignee: "", newDate: "" }]
             }
         ];
 
-        let state = [...scheduleData];
-        let currentFilterAssignee = null;
-
-        // Pré-preenche propriedades que vão interagir com o BD
-        state.forEach(m => m.tasks.forEach(t => {
-            t.status = t.completed ? 'completed' : 'pending';
-            t.assignee = '';
-            t.newDate = '';
-        }));
-
         async function initCloudSync() {
-            if(!firebaseConfig) {
-                console.log("Executando em modo local (sem config de banco).");
-                finishLoading();
-                return;
-            }
-
             try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // Autenticação Obrigatória antes de consultas (garantindo acesso seguro)
-                if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Autenticação anônima permite ler e gravar sem forçar login com email/senha (baseado nas regras de teste do Firestore)
+                await signInAnonymously(auth);
 
                 if(auth.currentUser) {
                     isDbConnected = true;
-                    listenToUpdates(); // Inicia Sincronização Real-time
+                    listenToUpdates();
                 }
             } catch(e) {
-                console.error("Erro na conexão com Banco de Dados:", e);
-                finishLoading(); // Libera interface em caso de falha para uso local
+                console.error("Erro na conexão:", e);
+                // Fallback para uso local sem internet
+                state = [...defaultInitialData];
+                renderMeetings();
+                finishLoading();
             }
         }
 
         function listenToUpdates() {
-            // Regra Obrigatória: Usando estrutura publica estrita de coleção
-            const tasksRef = collection(db, 'artifacts', appId, 'public', 'data', 'tasks');
+            // Utilizamos um único documento central para armazenar toda a estrutura do cronograma.
+            // Isso permite adicionar, remover e reordenar facilmente.
+            const scheduleRef = doc(db, 'artifacts', appId, 'public', 'data', 'schedule', 'main');
             
-            // onSnapshot com tratamento de erro
-            onSnapshot(tasksRef, (snapshot) => {
-                const cloudData = {};
-                snapshot.forEach(doc => {
-                    cloudData[doc.id] = doc.data();
-                });
-
-                // Atualizando estado local com dados da nuvem
-                state.forEach(m => m.tasks.forEach(t => {
-                    if (cloudData[t.id]) {
-                        t.status = cloudData[t.id].status || 'pending';
-                        t.completed = (t.status === 'completed');
-                        t.assignee = cloudData[t.id].assignee || '';
-                        t.newDate = cloudData[t.id].newDate || '';
-                    }
-                }));
-
+            onSnapshot(scheduleRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    state = docSnap.data().meetings || [];
+                } else {
+                    // Se não existir, popula com o default
+                    state = [...defaultInitialData];
+                    saveStateToCloud();
+                }
                 renderMeetings();
                 finishLoading();
             }, (error) => {
-                console.error("Erro no sincronismo ao vivo: ", error);
+                console.error("Erro ao escutar banco: ", error);
                 finishLoading();
             });
         }
 
-        async function updateTaskInDb(taskId, updates) {
-            if (!isDbConnected || !auth.currentUser) return;
-            const taskRef = doc(db, 'artifacts', appId, 'public', 'data', 'tasks', taskId);
+        async function saveStateToCloud() {
+            if (!isDbConnected) return;
+            const scheduleRef = doc(db, 'artifacts', appId, 'public', 'data', 'schedule', 'main');
             try {
-                await setDoc(taskRef, updates, { merge: true });
+                await setDoc(scheduleRef, { meetings: state });
             } catch (error) {
-                console.error("Erro ao salvar dado na nuvem: ", error);
+                console.error("Erro ao salvar: ", error);
             }
         }
 
@@ -389,32 +308,53 @@
         function renderMeetings() {
             const container = document.getElementById('meetings-container');
             container.innerHTML = '';
+            
+            // Adiciona classe ao body se for admin para mostrar botões ocultos
+            if(isAdmin) document.body.classList.add('admin-mode-active');
+            else document.body.classList.remove('admin-mode-active');
+
+            if(state.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-slate-400">Nenhum ciclo cadastrado. ${isAdmin ? 'Clique em "Novo Ciclo" para começar.' : ''}</div>`;
+                updateProgress();
+                return;
+            }
 
             state.forEach((meeting) => {
                 const visibleTasks = meeting.tasks.filter(t => !currentFilterAssignee || t.assignee.trim().toLowerCase() === currentFilterAssignee);
                 
-                if (visibleTasks.length === 0) return; 
+                // Se estiver filtrando e não tiver tarefa nessa reunião, oculta a reunião inteira
+                if (currentFilterAssignee && visibleTasks.length === 0) return; 
+
+                const totalMTasks = visibleTasks.length;
+                const completedMTasks = visibleTasks.filter(t => t.status === 'completed_on_time' || t.status === 'completed_late').length;
+                const isMeetingComplete = totalMTasks === completedMTasks && totalMTasks > 0;
 
                 const meetingCard = document.createElement('div');
                 meetingCard.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6";
                 
-                const totalMTasks = visibleTasks.length;
-                const completedMTasks = visibleTasks.filter(t => t.status === 'completed').length;
-                const isMeetingComplete = totalMTasks === completedMTasks && totalMTasks > 0;
-
                 const header = document.createElement('div');
                 header.className = `p-5 border-b border-slate-100 flex justify-between items-center transition-colors ${isMeetingComplete ? 'bg-green-50' : 'bg-slate-50'}`;
+                
+                // Botões administrativos do cabeçalho (Editar Reunião)
+                const adminMeetingControls = `
+                    <div class="admin-element flex gap-2 ml-4">
+                        <button onclick="window.openMeetingModal('${meeting.id}')" class="text-slate-400 hover:text-blue-600 p-1 transition-colors" title="Editar Ciclo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                        <button onclick="window.deleteMeeting('${meeting.id}')" class="text-slate-400 hover:text-red-600 p-1 transition-colors" title="Excluir Ciclo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
+                    </div>
+                `;
+
                 header.innerHTML = `
-                    <div>
+                    <div class="flex-1">
                         <div class="flex items-center gap-2">
                             <h3 class="text-lg font-bold text-slate-800">Reunião: ${meeting.date}</h3>
                             ${isMeetingComplete ? '<span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Auditado</span>' : ''}
+                            ${adminMeetingControls}
                         </div>
                         <p class="text-sm text-slate-500 mt-1">Pauta: ${meeting.scope}</p>
                     </div>
                     <div class="text-right">
                         <span class="text-sm font-medium ${isMeetingComplete ? 'text-green-600' : 'text-slate-500'}">
-                            ${completedMTasks} / ${totalMTasks} concluídas
+                            ${completedMTasks} / ${totalMTasks} entregas
                         </span>
                     </div>
                 `;
@@ -432,10 +372,14 @@
                     let bgClass = "hover:bg-slate-50";
                     let selectBg = "bg-slate-100 text-slate-600 border-slate-200";
                     
-                    if (task.status === 'completed') {
+                    if (task.status === 'completed_on_time') {
                         statusClass = "border-green-500 task-completed";
                         bgClass = "bg-green-50/50";
                         selectBg = "bg-green-100 text-green-700 border-green-200";
+                    } else if (task.status === 'completed_late') {
+                        statusClass = "border-teal-500 task-completed-late";
+                        bgClass = "bg-teal-50/50 hover:bg-teal-50";
+                        selectBg = "bg-teal-100 text-teal-700 border-teal-200";
                     } else if (task.status === 'delayed') {
                         statusClass = "border-red-500 task-delayed";
                         bgClass = "bg-red-50/50 hover:bg-red-50";
@@ -446,18 +390,28 @@
                         selectBg = "bg-orange-100 text-orange-700 border-orange-200";
                     }
 
-                    taskRow.className = `task-row p-4 flex flex-col sm:flex-row items-start gap-4 border-l-4 ${statusClass} ${bgClass}`;
+                    taskRow.className = `task-row p-4 flex flex-col sm:flex-row items-start gap-4 border-l-4 ${statusClass} ${bgClass} group`;
                     
-                    // Modificamos a injeção dos eventos onClick/onChange para acessar funções globais(window) usando ID
+                    const isTaskDone = (task.status === 'completed_on_time' || task.status === 'completed_late');
+
+                    // Botão de editar tarefa (Admin)
+                    const adminTaskControls = `
+                        <button onclick="window.openTaskModal('${meeting.id}', '${task.id}')" class="admin-element absolute right-4 top-4 text-slate-300 hover:text-blue-600 transition-colors bg-white rounded-full p-1.5 shadow-sm border border-slate-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                    `;
+
                     taskRow.innerHTML = `
-                        <div class="flex-1 w-full">
+                        <div class="flex-1 w-full relative pr-8">
+                            ${adminTaskControls}
                             <div class="flex flex-wrap items-center gap-2 mb-2">
-                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-200">Prazo Original: ${task.date}</span>
-                                <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded">Ref: ${task.code}</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-200" title="Data Prevista">${task.date}</span>
+                                <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded" title="Referência">Ref: ${task.code}</span>
                                 
-                                <select onchange="window.updateTaskStatus('${task.id}', this.value)" class="text-xs font-bold px-2 py-1 rounded border outline-none cursor-pointer ${selectBg}">
-                                    <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>⏱ Pendente</option>
-                                    <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Concluído</option>
+                                <select onchange="window.updateTaskStatus('${meeting.id}', '${task.id}', this.value)" class="text-xs font-bold px-2 py-1 rounded border outline-none cursor-pointer transition-colors ${selectBg}">
+                                    <option value="pending" ${(!task.status || task.status === 'pending') ? 'selected' : ''}>⏱ Pendente</option>
+                                    <option value="completed_on_time" ${task.status === 'completed_on_time' ? 'selected' : ''}>✅ Entregue no prazo</option>
+                                    <option value="completed_late" ${task.status === 'completed_late' ? 'selected' : ''}>☑️ Entregue c/ atraso</option>
                                     <option value="delayed" ${task.status === 'delayed' ? 'selected' : ''}>🚨 Atrasado</option>
                                     <option value="rescheduled" ${task.status === 'rescheduled' ? 'selected' : ''}>📅 Reprogramado</option>
                                 </select>
@@ -465,74 +419,72 @@
                                 ${task.status === 'rescheduled' ? `
                                     <div class="flex items-center gap-1 bg-white border border-orange-200 rounded px-2 py-0.5 shadow-sm">
                                         <span class="text-xs text-orange-600 font-medium">Nova data:</span>
-                                        <input type="date" value="${task.newDate}" onchange="window.updateTaskNewDate('${task.id}', this.value)" class="text-xs outline-none bg-transparent text-slate-700">
+                                        <input type="text" placeholder="DD/MM" value="${task.newDate || ''}" onchange="window.updateTaskNewDate('${meeting.id}', '${task.id}', this.value)" class="text-xs outline-none bg-transparent text-slate-700 w-16">
                                     </div>
                                 ` : ''}
                             </div>
                             
-                            <p class="text-sm font-medium mb-3 ${task.status === 'completed' ? 'text-slate-400 line-through' : 'text-slate-800'}">${task.desc}</p>
+                            <p class="text-sm font-medium mb-3 pr-4 ${isTaskDone ? 'text-slate-400 line-through' : 'text-slate-800'}">${task.desc}</p>
                             
                             <div class="flex items-center gap-2 bg-white/80 p-2 rounded-md border border-slate-200 inline-flex shadow-sm">
                                 <svg class="w-4 h-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                <input type="text" placeholder="Atribuir responsável..." value="${task.assignee}" onblur="window.updateTaskAssignee('${task.id}', this.value)" onkeyup="if(event.key === 'Enter') this.blur()" class="text-sm bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none w-56 py-0.5 placeholder-slate-400 text-slate-700 transition-colors">
+                                <input type="text" placeholder="Atribuir responsável..." value="${task.assignee || ''}" onblur="window.updateTaskAssignee('${meeting.id}', '${task.id}', this.value)" onkeyup="if(event.key === 'Enter') this.blur()" class="text-sm bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none w-48 sm:w-56 py-0.5 placeholder-slate-400 text-slate-700 transition-colors">
                             </div>
                         </div>
                     `;
                     taskList.appendChild(taskRow);
                 });
 
+                // Botão de adicionar tarefa (Admin)
+                const addTaskBtn = document.createElement('div');
+                addTaskBtn.className = "admin-element w-full p-3 bg-slate-50 border-t border-slate-100 flex justify-center";
+                addTaskBtn.innerHTML = `
+                    <button onclick="window.openTaskModal('${meeting.id}', null)" class="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 py-1 px-3 rounded-full hover:bg-blue-50 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Adicionar Passo
+                    </button>
+                `;
+                
                 meetingCard.appendChild(taskList);
+                meetingCard.appendChild(addTaskBtn);
                 container.appendChild(meetingCard);
             });
 
             updateProgress();
         }
 
-        window.updateTaskStatus = (taskId, newStatus) => {
-            // Em modo offline atualiza local. Em modo online envia pro banco (que aciona re-render)
-            if(isDbConnected) {
-                updateTaskInDb(taskId, { status: newStatus });
-            } else {
-                updateLocalTask(taskId, { status: newStatus, completed: (newStatus === 'completed') });
-            }
+        window.updateTaskStatus = (meetingId, taskId, newStatus) => {
+            updateTaskField(meetingId, taskId, 'status', newStatus);
         };
 
-        window.updateTaskAssignee = (taskId, assigneeName) => {
-            if(isDbConnected) {
-                updateTaskInDb(taskId, { assignee: assigneeName });
-            } else {
-                updateLocalTask(taskId, { assignee: assigneeName });
-            }
+        window.updateTaskAssignee = (meetingId, taskId, assigneeName) => {
+            updateTaskField(meetingId, taskId, 'assignee', assigneeName);
         };
 
-        window.updateTaskNewDate = (taskId, dateVal) => {
-            if(isDbConnected) {
-                updateTaskInDb(taskId, { newDate: dateVal });
-            } else {
-                updateLocalTask(taskId, { newDate: dateVal });
-            }
+        window.updateTaskNewDate = (meetingId, taskId, dateVal) => {
+            updateTaskField(meetingId, taskId, 'newDate', dateVal);
         };
         
-        function updateLocalTask(taskId, updates) {
-            state.forEach(m => m.tasks.forEach(t => {
-                if(t.id === taskId) {
-                    Object.assign(t, updates);
+        function updateTaskField(meetingId, taskId, field, value) {
+            const meeting = state.find(m => m.id === meetingId);
+            if(meeting) {
+                const task = meeting.tasks.find(t => t.id === taskId);
+                if(task) {
+                    task[field] = value;
+                    saveStateToCloud();
+                    // O render será acionado pelo onSnapshot. Caso não haja conexão, forçamos o render:
+                    if(!isDbConnected) renderMeetings();
                 }
-            }));
-            renderMeetings();
+            }
         }
 
         function updateProgress() {
-            let total = 0;
-            let completed = 0;
-            let delayed = 0;
-            let rescheduled = 0;
-            let pending = 0;
+            let total = 0, completed = 0, delayed = 0, rescheduled = 0, pending = 0;
 
             state.forEach(meeting => {
                 meeting.tasks.forEach(task => {
                     total++;
-                    if(task.status === 'completed') completed++;
+                    if(task.status === 'completed_on_time' || task.status === 'completed_late') completed++;
                     else if(task.status === 'delayed') delayed++;
                     else if(task.status === 'rescheduled') rescheduled++;
                     else pending++;
@@ -549,31 +501,18 @@
             document.getElementById('circle-progress').setAttribute('stroke-dasharray', `${percentage}, 100`);
             document.getElementById('progress-text-bi').innerText = `${percentage}%`;
             
-            if(percentage === 100) {
-                document.getElementById('circle-progress').classList.remove('text-blue-500');
-                document.getElementById('circle-progress').classList.add('text-green-500');
+            if(percentage === 100 && total > 0) {
+                document.getElementById('circle-progress').classList.replace('text-blue-500', 'text-green-500');
             } else {
-                document.getElementById('circle-progress').classList.add('text-blue-500');
-                document.getElementById('circle-progress').classList.remove('text-green-500');
+                document.getElementById('circle-progress').classList.replace('text-green-500', 'text-blue-500');
             }
 
             renderAssigneeStats();
         }
 
         window.toggleAssigneeFilter = (assigneeKey) => {
-            if (currentFilterAssignee === assigneeKey) {
-                currentFilterAssignee = null;
-            } else {
-                currentFilterAssignee = assigneeKey;
-            }
-            
-            const clearBtn = document.getElementById('clear-filter-btn');
-            if (currentFilterAssignee) {
-                clearBtn.classList.remove('hidden');
-            } else {
-                clearBtn.classList.add('hidden');
-            }
-
+            currentFilterAssignee = currentFilterAssignee === assigneeKey ? null : assigneeKey;
+            document.getElementById('clear-filter-btn').classList.toggle('hidden', !currentFilterAssignee);
             renderMeetings();
         };
 
@@ -584,14 +523,12 @@
             const stats = {};
             state.forEach(meeting => {
                 meeting.tasks.forEach(task => {
-                    let assignee = task.assignee.trim();
+                    let assignee = (task.assignee || '').trim();
                     if (assignee) {
                         let key = assignee.toLowerCase();
-                        if (!stats[key]) {
-                            stats[key] = { name: assignee, key: key, total: 0, completed: 0, delayed: 0 };
-                        }
+                        if (!stats[key]) stats[key] = { name: assignee, key: key, total: 0, completed: 0, delayed: 0 };
                         stats[key].total++;
-                        if (task.status === 'completed') stats[key].completed++;
+                        if (task.status === 'completed_on_time' || task.status === 'completed_late') stats[key].completed++;
                         if (task.status === 'delayed') stats[key].delayed++;
                     }
                 });
@@ -600,7 +537,7 @@
             const statsArray = Object.values(stats).sort((a, b) => b.total - a.total);
 
             if(statsArray.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-lg border border-slate-100">Nenhum responsável atribuído.<br/>Atribua tarefas para ativar a análise.</p>';
+                container.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-lg border border-slate-100">Atribua tarefas para ativar a análise de equipe.</p>';
                 return;
             }
 
@@ -609,7 +546,7 @@
                 const isSelected = currentFilterAssignee === stat.key;
                 
                 const div = document.createElement('div');
-                div.className = `p-3 rounded-lg border cursor-pointer transition-all ${isSelected ? 'bg-blue-50 border-blue-300 shadow-sm transform scale-[1.02]' : 'bg-white border-slate-200 hover:border-blue-400 hover:shadow-sm'}`;
+                div.className = `p-3 rounded-lg border cursor-pointer transition-all ${isSelected ? 'bg-blue-50 border-blue-300 shadow-sm' : 'bg-white border-slate-200 hover:border-blue-400'}`;
                 div.onclick = () => window.toggleAssigneeFilter(stat.key);
                 
                 div.innerHTML = `
@@ -618,7 +555,7 @@
                         <span class="text-xs font-black ${percent === 100 ? 'text-green-600' : 'text-slate-600'}">${percent}%</span>
                     </div>
                     <div class="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
-                        <div class="bg-${percent === 100 ? 'green' : 'blue'}-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                        <div class="bg-${percent === 100 ? 'green' : 'blue'}-500 h-full rounded-full" style="width: ${percent}%"></div>
                     </div>
                     <div class="flex justify-between text-[10px] text-slate-500 font-medium">
                         <span>${stat.completed}/${stat.total} entregas</span>
@@ -629,50 +566,157 @@
             });
         }
 
-        window.resetAll = () => {
-            document.getElementById('custom-modal').classList.remove('hidden');
-        };
-
-        window.closeModal = () => {
-            document.getElementById('custom-modal').classList.add('hidden');
-        };
-
-        window.confirmReset = async () => {
-            window.closeModal();
-            document.getElementById('loading-overlay').style.display = 'flex';
-            document.getElementById('loading-overlay').style.opacity = '1';
-
-            if(isDbConnected) {
-                // Batch write para limpar todas as tarefas na nuvem rapidamente
-                const batch = writeBatch(db);
-                state.forEach(m => m.tasks.forEach(t => {
-                    const taskRef = doc(db, 'artifacts', appId, 'public', 'data', 'tasks', t.id);
-                    batch.set(taskRef, { status: 'pending', assignee: '', newDate: '' }, { merge: true });
-                }));
-                try {
-                    await batch.commit();
-                    // onSnapshot cuidará do re-render da tela após apagar.
-                } catch(e) {
-                    console.error("Erro ao limpar dados na nuvem: ", e);
-                    finishLoading();
-                }
-            } else {
-                // Limpeza apenas local (offline)
-                state.forEach(m => m.tasks.forEach(t => {
-                    t.status = 'pending';
-                    t.completed = false;
-                    t.assignee = '';
-                    t.newDate = '';
-                }));
+        window.requestAdminAccess = () => {
+            if(isAdmin) {
+                // Fazer logout admin
+                isAdmin = false;
+                document.getElementById('admin-status-text').innerText = "Orquestrador";
+                document.getElementById('btn-admin-login').classList.replace('bg-green-700', 'bg-slate-800');
                 renderMeetings();
-                finishLoading();
+            } else {
+                document.getElementById('admin-password-input').value = '';
+                document.getElementById('auth-error').classList.add('hidden');
+                document.getElementById('modal-auth').classList.remove('hidden');
             }
         };
 
-        // Inicializar aplicação
+        window.closeAuthModal = () => document.getElementById('modal-auth').classList.add('hidden');
+
+        window.verifyAdmin = () => {
+            const pass = document.getElementById('admin-password-input').value;
+            if(pass === "glicia2026") {
+                isAdmin = true;
+                window.closeAuthModal();
+                document.getElementById('admin-status-text').innerText = "Modo Edição Ativo";
+                document.getElementById('btn-admin-login').classList.replace('bg-slate-800', 'bg-green-700');
+                renderMeetings();
+            } else {
+                document.getElementById('auth-error').classList.remove('hidden');
+            }
+        };
+
+        // Lógica: Reuniões (Adicionar/Editar/Excluir)
+        window.openMeetingModal = (meetingId = null) => {
+            currentEditingMeetingId = meetingId;
+            const titleEl = document.getElementById('modal-meeting-title');
+            
+            if(meetingId) {
+                const meeting = state.find(m => m.id === meetingId);
+                titleEl.innerText = "Editar Reunião";
+                document.getElementById('meeting-input-date').value = meeting.date;
+                document.getElementById('meeting-input-scope').value = meeting.scope;
+            } else {
+                titleEl.innerText = "Nova Reunião / Ciclo";
+                document.getElementById('meeting-input-date').value = "";
+                document.getElementById('meeting-input-scope').value = "";
+            }
+            document.getElementById('modal-meeting').classList.remove('hidden');
+        };
+
+        window.closeMeetingModal = () => document.getElementById('modal-meeting').classList.add('hidden');
+
+        window.saveMeetingData = () => {
+            const date = document.getElementById('meeting-input-date').value.trim();
+            const scope = document.getElementById('meeting-input-scope').value.trim();
+            
+            if(!date) return;
+
+            if(currentEditingMeetingId) {
+                const meeting = state.find(m => m.id === currentEditingMeetingId);
+                meeting.date = date;
+                meeting.scope = scope;
+            } else {
+                state.push({
+                    id: "rev-" + Date.now(),
+                    date: date,
+                    scope: scope,
+                    tasks: []
+                });
+            }
+            
+            saveStateToCloud();
+            if(!isDbConnected) renderMeetings();
+            window.closeMeetingModal();
+        };
+
+        window.deleteMeeting = (meetingId) => {
+            // Em vez de prompt/confirm complexo, remove direto ou oculta para admin ter ctz (ideal ter um confirm, mas evitamos o nativo por restrição. Vamos apagar direto p/ simplificar a UX admin).
+            state = state.filter(m => m.id !== meetingId);
+            saveStateToCloud();
+            if(!isDbConnected) renderMeetings();
+        };
+
+        // Lógica: Tarefas (Adicionar/Editar/Excluir)
+        window.openTaskModal = (meetingId, taskId = null) => {
+            currentEditingMeetingId = meetingId;
+            currentEditingTaskId = taskId;
+            
+            const titleEl = document.getElementById('modal-task-title');
+            const delBtn = document.getElementById('btn-delete-task');
+
+            if(taskId) {
+                titleEl.innerText = "Editar Tarefa";
+                delBtn.classList.remove('hidden');
+                
+                const meeting = state.find(m => m.id === meetingId);
+                const task = meeting.tasks.find(t => t.id === taskId);
+                
+                document.getElementById('task-input-date').value = task.date;
+                document.getElementById('task-input-code').value = task.code;
+                document.getElementById('task-input-desc').value = task.desc;
+            } else {
+                titleEl.innerText = "Nova Tarefa";
+                delBtn.classList.add('hidden');
+                document.getElementById('task-input-date').value = "";
+                document.getElementById('task-input-code').value = "";
+                document.getElementById('task-input-desc').value = "";
+            }
+            document.getElementById('modal-task').classList.remove('hidden');
+        };
+
+        window.closeTaskModal = () => document.getElementById('modal-task').classList.add('hidden');
+
+        window.saveTaskData = () => {
+            const date = document.getElementById('task-input-date').value.trim();
+            const code = document.getElementById('task-input-code').value.trim();
+            const desc = document.getElementById('task-input-desc').value.trim();
+            
+            if(!desc) return; // Descrição é obrigatória
+
+            const meeting = state.find(m => m.id === currentEditingMeetingId);
+
+            if(currentEditingTaskId) {
+                const task = meeting.tasks.find(t => t.id === currentEditingTaskId);
+                task.date = date;
+                task.code = code;
+                task.desc = desc;
+            } else {
+                meeting.tasks.push({
+                    id: "t" + Date.now(),
+                    date: date,
+                    code: code,
+                    desc: desc,
+                    status: "pending",
+                    assignee: "",
+                    newDate: ""
+                });
+            }
+
+            saveStateToCloud();
+            if(!isDbConnected) renderMeetings();
+            window.closeTaskModal();
+        };
+
+        window.confirmDeleteTask = () => {
+            const meeting = state.find(m => m.id === currentEditingMeetingId);
+            meeting.tasks = meeting.tasks.filter(t => t.id !== currentEditingTaskId);
+            saveStateToCloud();
+            if(!isDbConnected) renderMeetings();
+            window.closeTaskModal();
+        };
+
         window.onload = () => {
-            renderMeetings(); // Renderiza vazio para evitar tela em branco
-            initCloudSync(); // Inicia conexão
+            initCloudSync(); 
         };
     </script>
 </body>
