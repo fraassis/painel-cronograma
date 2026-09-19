@@ -9,16 +9,16 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         
-        /* Custom scrollbar */
+        /* Custom scrollbar para melhor UX */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Smooth transitions */
+        /* Transições suaves */
         .task-row { transition: all 0.3s ease; }
         
-        /* State styling */
+        /* Cores de Status atualizadas */
         .task-completed { background-color: #f0fdf4 !important; border-left-color: #22c55e !important; }
         .task-completed-late { background-color: #f0fdfa !important; border-left-color: #14b8a6 !important; }
         .task-delayed { background-color: #fef2f2 !important; border-left-color: #ef4444 !important; }
@@ -29,12 +29,12 @@
         .admin-mode-active .admin-element { display: inline-flex; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilo para Conteúdo IA */
+        /* Estilo para Conteúdo IA gerado */
         .ai-content h3 { font-size: 1rem; font-weight: bold; color: #1e293b; margin-top: 1rem; margin-bottom: 0.5rem; }
         .ai-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
         .ai-content p { margin-bottom: 0.5rem; }
 
-        /* Toast Notifications */
+        /* Toast Notifications (Popups de aviso) */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { background: white; border-left: 4px solid #3b82f6; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .toast.show { transform: translateX(0); }
@@ -44,7 +44,6 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- CABEÇALHO -->
     <header class="bg-slate-900 text-white z-50 shadow-md flex-shrink-0 sticky top-0">
         <div class="w-full px-4 py-4 flex flex-wrap justify-between items-center gap-3">
             <div>
@@ -52,11 +51,9 @@
                 <p class="text-slate-400 text-xs mt-0.5">Gestão, Auditoria e Prestação de Contas Semanal • Glicia</p>
             </div>
             <div class="flex items-center gap-2">
-                <!-- Botão Sincronizar -->
                 <button onclick="window.forceSync()" id="btn-sync" class="text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded flex items-center gap-2 transition-colors border border-slate-600 shadow-sm">
                     ☁️ Sincronizar
                 </button>
-                <!-- Botão Orquestrador -->
                 <button onclick="window.requestAdminAccess()" id="btn-admin-login" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 py-1.5 px-3 rounded flex items-center gap-2 transition-colors border border-slate-700">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     <span class="hidden sm:inline" id="admin-status-text">Orquestrador</span>
@@ -65,12 +62,11 @@
         </div>
     </header>
 
-    <!-- CORPO PRINCIPAL -->
-    <div class="flex-1 flex flex-col md:flex-row items-stretch">
+    <div class="flex-1 flex flex-col lg:flex-row items-stretch">
         
-        <!-- SIDEBAR ESQUERDA: BI (Resumo de Status) -->
-        <aside class="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 z-10 flex flex-col">
-            <div class="p-6 md:sticky md:top-[72px]">
+        <!-- SIDEBAR ESQUERDA: BI (Resumo de Status e Perfomance) -->
+        <aside class="w-full lg:w-80 xl:w-96 bg-white border-r border-slate-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 z-10 flex flex-col">
+            <div class="p-6 lg:sticky lg:top-[72px]">
                 <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
                     Resumo Executivo
@@ -94,7 +90,7 @@
 
                 <div class="grid grid-cols-2 gap-3 mb-8">
                     <div class="bg-green-50 border border-green-100 rounded-xl p-3 flex flex-col">
-                        <span class="text-green-600 text-[10px] font-bold uppercase tracking-wide mb-1">Validadas</span>
+                        <span class="text-green-600 text-[10px] font-bold uppercase tracking-wide mb-1">Entregues</span>
                         <span id="count-completed" class="text-xl font-black text-green-700">0</span>
                     </div>
                     <div class="bg-red-50 border border-red-100 rounded-xl p-3 flex flex-col">
@@ -111,11 +107,10 @@
                     </div>
                 </div>
 
-                <!-- Botão Gerar Matriz SWOT (IA) -->
                 <div class="mb-8">
                     <button onclick="window.openSwotModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-md">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                        Gerar Análise SWOT (IA)
+                        Gerar Análise Estratégica (IA)
                     </button>
                 </div>
 
@@ -134,7 +129,6 @@
             </div>
         </aside>
 
-        <!-- CENTRO: TAREFAS CRONOLÓGICAS -->
         <main class="flex-1 p-4 md:p-8 bg-slate-50/50">
             <div class="max-w-4xl mx-auto" id="app-container">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-2 border-b border-slate-200">
@@ -154,7 +148,6 @@
             </div>
         </main>
 
-        <!-- SIDEBAR DIREITA: CALENDÁRIO E LOGS -->
         <aside class="w-full xl:w-72 bg-white border-l border-slate-200 shadow-sm flex-shrink-0 z-10 flex flex-col hidden xl:flex">
             <div class="p-6 md:sticky md:top-[72px] max-h-screen overflow-y-auto">
                 <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -176,22 +169,19 @@
         </aside>
     </div>
 
-    <!-- Container de Toast Notifications -->
     <div id="toast-container"></div>
 
-    <!-- Overlay de Carregamento -->
     <div id="loading-overlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
         <svg class="animate-spin h-10 w-10 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
         <p class="text-slate-600 font-semibold text-sm">Sincronizando banco de dados colaborativo...</p>
     </div>
 
-    <!-- Modal Orquestrador (Senha) -->
+    <!-- Modal Orquestrador -->
     <div id="modal-auth" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full transform transition-all">
             <h3 class="text-lg font-bold text-slate-800 mb-2">Acesso Restrito</h3>
             <p class="text-slate-500 text-xs mb-4">Insira a senha do orquestrador para adicionar ou editar a estrutura do cronograma.</p>
             <input type="password" id="admin-password-input" placeholder="Senha Mestra (glicia2026)" class="w-full border border-slate-300 rounded-lg px-3 py-2 mb-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-            
             <div id="auth-error" class="hidden text-red-500 text-xs font-bold mb-4">Senha incorreta.</div>
             <div class="flex justify-end gap-2">
                 <button onclick="window.closeAuthModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
@@ -200,7 +190,7 @@
         </div>
     </div>
 
-    <!-- Modal de Tarefa (Adicionar/Editar) -->
+    <!-- Modal Tarefa -->
     <div id="modal-task" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full transform transition-all">
             <h3 id="modal-task-title" class="text-lg font-bold text-slate-800 mb-4">Adicionar Tarefa</h3>
@@ -232,7 +222,7 @@
         </div>
     </div>
 
-    <!-- Modal de Reunião (Adicionar/Editar) -->
+    <!-- Modal Reunião -->
     <div id="modal-meeting" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full transform transition-all">
             <h3 id="modal-meeting-title" class="text-lg font-bold text-slate-800 mb-4">Nova Reunião / Ciclo</h3>
@@ -246,14 +236,16 @@
                     <textarea id="meeting-input-scope" rows="2" placeholder="Prestação de contas das entregas de..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 resize-none"></textarea>
                 </div>
             </div>
-            <div class="flex justify-end items-center mt-6 pt-4 border-t border-slate-100 gap-2">
-                <button onclick="window.closeMeetingModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
-                <button onclick="window.saveMeetingData()" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm">Salvar Reunião</button>
+            <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100 gap-2">
+                <button id="btn-delete-meeting" onclick="window.confirmDeleteMeeting()" class="hidden px-3 py-2 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-1">Excluir Ciclo</button>
+                <div class="flex gap-2 ml-auto">
+                    <button onclick="window.closeMeetingModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
+                    <button onclick="window.saveMeetingData()" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm">Salvar Reunião</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAIS DE INTELIGÊNCIA ARTIFICIAL -->
     
     <!-- Modal Análise SWOT (IA) -->
     <div id="modal-swot" class="hidden fixed inset-0 bg-slate-900/80 z-[120] flex items-center justify-center backdrop-blur-sm p-4">
@@ -282,12 +274,12 @@
             
             <div class="mb-4">
                 <p class="text-xs text-slate-500 mb-2"><strong>Tarefa Exigida:</strong> <span id="ai-task-desc-display"></span></p>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Cole aqui o conteúdo bruto do Relatório ou Notas da Entrega:</label>
-                <textarea id="ai-task-input" rows="5" class="w-full border border-slate-300 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none" placeholder="A IA lerá este conteúdo, validará se faz sentido com a tarefa exigida, e criará um resumo executivo padronizado para salvar no banco de dados."></textarea>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Cole aqui o conteúdo bruto do Relatório, Ata ou Notas da Entrega para validação:</label>
+                <textarea id="ai-task-input" rows="5" class="w-full border border-slate-300 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none" placeholder="A IA lerá este conteúdo, validará se comprova a entrega exigida, e criará um resumo padronizado."></textarea>
             </div>
             
             <div id="ai-task-result-container" class="hidden mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-                <h4 class="text-xs font-bold text-indigo-800 mb-2 uppercase tracking-wide">Resumo Padronizado Sugerido pela IA</h4>
+                <h4 class="text-xs font-bold text-indigo-800 mb-2 uppercase tracking-wide">Avaliação da Inteligência Artificial</h4>
                 <div id="ai-task-result" class="ai-content text-sm text-slate-700"></div>
             </div>
 
@@ -296,27 +288,21 @@
                     Analisar Conteúdo
                 </button>
                 <button onclick="window.saveAiTaskAudit()" id="btn-save-ai" class="hidden px-4 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-colors">
-                    Aprovar e Anexar
+                    Aprovar e Anexar Resumo
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPTS CORE E FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // =========================================================================
-        // CONFIGURAÇÕES
+        // CONFIGURAÇÕES (BANCO DE DADOS E INTELIGÊNCIA ARTIFICIAL)
         // =========================================================================
         
-        // 1. SUA CHAVE DO GEMINI AQUI (Deve começar obrigatoriamente com "AIza...")
-        // Gere uma gratuitamente em: https://aistudio.google.com/app/apikey
-        const GEMINI_API_KEY = "AQ.Ab8RN6LmmYPWmA0C-_O_GYqzFSP7hOxjkjhbcY_BvBO9RUJekw"; 
-
-        // 2. SUA CONEXÃO DO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyD-YEtxZkGOA4tuleo2zkRxBLOFXWYJ2ko",
             authDomain: "cronogramaotimaaudit.firebaseapp.com",
@@ -326,18 +312,21 @@
             appId: "1:421525034998:web:3144f96888ea4be39fd9d7"
         };
 
+        // CHAVE DA INTELIGÊNCIA ARTIFICIAL ATUALIZADA
+        const GEMINI_API_KEY = "AQ.Ab8RN6LmmYPWmA0C-_O_GYqzFSP7hOxjkjhbcY_BvBO9RUJekw"; 
+
         const appId = 'glicia-auditoria'; 
         let db, auth;
         let isDbConnected = false;
 
-        // DADOS PADRÃO (Pré-carregados para o caso do Firebase estar vazio)
+        // ESTADO INICIAL RECONSTRUÍDO (Cronograma Validado: 14/09 a 14/12)
         const defaultState = [
             { id: 'm1', date: '14/09', scope: 'Entregas até 13/09', tasks: [
                 { id: 't1', date: '12/09', code: '5.1', desc: 'Mobilização e diagnóstico', status: 'pending', assignee: '', newDate: '' }
             ]},
             { id: 'm2', date: '21/09', scope: 'Entregas de 14/09 a 20/09', tasks: [
                 { id: 't2', date: '14/09', code: '1.2', desc: 'Aquisição IA – Empresarial', status: 'pending', assignee: '', newDate: '' },
-                { id: 't3', date: '14/09', code: '2.1', desc: 'Atualizar e implantar política de despesas', status: 'pending', assignee: '', newDate: '' },
+                { id: 't3', date: '14/09', code: '2.1', desc: 'Atualizar e implantar política de despesas (Fluxo, responsabilidades e tetos)', status: 'pending', assignee: '', newDate: '' },
                 { id: 't4', date: '14/09', code: '2.2', desc: 'Revisar contas gerenciais', status: 'pending', assignee: '', newDate: '' },
                 { id: 't5', date: '14/09', code: '4.1', desc: 'Mapear todas as regras atuais de comissões', status: 'pending', assignee: '', newDate: '' },
                 { id: 't6', date: '15/09', code: '2.3', desc: 'Reclassificação de despesas por centro de custo', status: 'pending', assignee: '', newDate: '' },
@@ -372,24 +361,24 @@
                 { id: 't29', date: '10/10', code: '7.5', desc: 'Criar Plano de Ação com Comercial e Marketing', status: 'pending', assignee: '', newDate: '' }
             ]},
             { id: 'm6', date: '19/10', scope: 'Entregas de 12/10 a 18/10', tasks: [
-                { id: 't30', date: '18/10', code: '7.2', desc: 'Saneamento: Validar cadastros, SKU ativos/inativos, ABC...', status: 'pending', assignee: '', newDate: '' }
+                { id: 't30', date: '18/10', code: '7.2', desc: 'Saneamento: Validar cadastros, SKU, ABC, Estoque sem giro...', status: 'pending', assignee: '', newDate: '' }
             ]},
             { id: 'm7', date: '26/10', scope: 'Entregas de 19/10 a 25/10', tasks: [
                 { id: 't31', date: '19/10', code: '5.3', desc: 'Cruzamento e modelo', status: 'pending', assignee: '', newDate: '' },
                 { id: 't32', date: '19/10', code: '7.3', desc: 'Segmentação: Classificar ABC (giro, faturamento, rentabilidade)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't33', date: '19/10', code: '7.6', desc: 'Criar política de Auditoria em compras', status: 'pending', assignee: '', newDate: '' }
+                { id: 't33', date: '19/10', code: '7.6', desc: 'Criar política de Auditoria em compras (pedidos, valores, leadtime)', status: 'pending', assignee: '', newDate: '' }
             ]},
             { id: 'm8', date: '09/11', scope: 'Entregas do final de outubro até 08/11', tasks: [
                 { id: 't34', date: '03/11', code: '7.7', desc: 'Desenvolver indicadores e estruturar dashboard', status: 'pending', assignee: '', newDate: '' },
                 { id: 't35', date: '07/11', code: '5.8', desc: 'Desenvolver um BI - Monitoramento', status: 'pending', assignee: '', newDate: '' },
-                { id: 't36', date: '07/11', code: '7.8', desc: 'Governança – reuniões semanais', status: 'pending', assignee: '', newDate: '' }
+                { id: 't36', date: '07/11', code: '7.8', desc: 'Governança – reuniões semanais para tratamento', status: 'pending', assignee: '', newDate: '' }
             ]},
             { id: 'm9', date: '07/12', scope: 'Entregas de novembro (até 06/12)', tasks: [
                 { id: 't37', date: '30/11', code: '8.1', desc: 'Medir os principais indicadores para identificar desvios', status: 'pending', assignee: '', newDate: '' }
             ]},
             { id: 'm10', date: '14/12', scope: 'Entregas de 07/12 a 13/12', tasks: [
                 { id: 't38', date: '07/12', code: '8.2', desc: 'Aquisição BI Empresarial – Grupo Ótima', status: 'pending', assignee: '', newDate: '' },
-                { id: 't39', date: '13/12', code: '9.1', desc: 'Garantir que clientes, produtos, canais e operações gerem resultado', status: 'pending', assignee: '', newDate: '' }
+                { id: 't39', date: '13/12', code: '9.1', desc: 'Garantir que clientes, produtos, canais gerem resultado', status: 'pending', assignee: '', newDate: '' }
             ]}
         ];
 
@@ -413,14 +402,7 @@
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
 
-        // ---------------------------------------------------------
-        // MOTOR DE INTELIGÊNCIA ARTIFICIAL (GEMINI API)
-        // ---------------------------------------------------------
         async function callGemini(userQuery, systemPrompt) {
-            if(!GEMINI_API_KEY || GEMINI_API_KEY === "SUA_CHAVE_AQUI") {
-                return "⚠️ **Erro Crítico:** A chave de API não foi inserida no código. Procure a linha 'const GEMINI_API_KEY' no topo do arquivo HTML e insira uma chave válida começada por AIza...";
-            }
-
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             
             try {
@@ -429,16 +411,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { temperature: 0.3 }
                     })
                 });
                 
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || "Erro na API");
+                }
+                
                 const result = await response.json();
                 
-                if(result.error) {
-                    return `🚨 **Falha na Autenticação da Chave:** O Google rejeitou a chave (${result.error.status}). Verifique se a chave está correta e se começa por "AIza...". Se for preciso, crie uma nova no Google AI Studio.`;
-                }
-
                 if(result.candidates && result.candidates[0].content) {
                     let text = result.candidates[0].content.parts[0].text;
                     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -448,10 +432,10 @@
                     text = text.replace(/\n/g, '<br>');
                     return text;
                 }
-                return "Não foi possível gerar a análise.";
+                return "Não foi possível gerar a análise. A IA não retornou um conteúdo válido.";
             } catch(e) {
                 console.error(e);
-                return "🚨 **Erro de Conexão:** Falha ao comunicar com os servidores do Google.";
+                return `🚨 **Erro de Conexão:** Falha ao se comunicar com o Gemini. Detalhe: ${e.message}`;
             }
         }
 
@@ -472,25 +456,25 @@
 
         window.generateAiTaskAudit = async () => {
             const rawContent = document.getElementById('ai-task-input').value.trim();
-            if(!rawContent) { alert("Cole o conteúdo bruto ou resumo da entrega primeiro."); return; }
+            if(!rawContent) { alert("Cole o conteúdo bruto, ata ou resumo da entrega primeiro."); return; }
 
             const btn = document.getElementById('btn-generate-ai');
-            btn.innerHTML = '⏱ Analisando com IA...';
+            btn.innerHTML = '⏱ Processando Documento...';
             btn.disabled = true;
 
-            const systemPrompt = `Você é um Auditor Sênior de Projetos. Sua função é analisar o texto bruto e verificar se comprova a Tarefa Exigida.
-Regras:
-1. Se o texto for vago ou não comprovar a entrega, inicie a frase com: "ERRO: O conteúdo fornecido não atende à entrega exigida."
-2. Se comprovar, crie um Resumo Executivo em até 3 bullet points claros e profissionais.`;
+            const systemPrompt = `Você é um Consultor Sênior e Guardião de Auditoria de Projetos. Sua função é analisar o texto bruto colado pelo usuário e verificar rigorosamente se ele comprova a execução da Tarefa Exigida.
+Regras Restritas:
+1. Se o texto for vago ou irrelevante, responda INICIANDO A FRASE EXATAMENTE COM: "ERRO: O conteúdo fornecido não atende ou não comprova a entrega exigida."
+2. Se comprovar, crie um Resumo Executivo em no máximo 3 bullet points limpos e diretos.`;
             
             const taskDesc = document.getElementById('ai-task-desc-display').innerText;
-            const aiResponse = await callGemini(`Tarefa Exigida: ${taskDesc}\n\nConteúdo Fornecido:\n"${rawContent}"`, systemPrompt);
+            const aiResponse = await callGemini(`Tarefa Exigida na Auditoria: ${taskDesc}\n\nConteúdo Fornecido:\n"${rawContent}"`, systemPrompt);
             
             currentAiReportDraft = aiResponse;
             document.getElementById('ai-task-result').innerHTML = aiResponse;
             document.getElementById('ai-task-result-container').classList.remove('hidden');
             
-            if(aiResponse.includes("ERRO:") || aiResponse.includes("Falha")) {
+            if(aiResponse.includes("ERRO:")) {
                 document.getElementById('btn-save-ai').classList.add('hidden');
             } else {
                 document.getElementById('btn-save-ai').classList.remove('hidden');
@@ -508,7 +492,7 @@ Regras:
                     if(task) {
                         task.aiReport = currentAiReportDraft;
                         task.status = "completed_on_time"; 
-                        window.showToast("Análise da IA salva e tarefa aprovada com sucesso!");
+                        window.showToast("Auditoria validada pela IA e salva!");
                         if(isDbConnected) {
                             await window.forceSync();
                         } else {
@@ -523,36 +507,44 @@ Regras:
         window.openSwotModal = async () => {
             document.getElementById('modal-swot').classList.remove('hidden');
             const contentDiv = document.getElementById('swot-content');
-            contentDiv.innerHTML = `<div class="flex flex-col items-center justify-center h-40 text-slate-400"><svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>A IA está a processar a análise estratégica...</div>`;
+            contentDiv.innerHTML = `<div class="flex flex-col items-center justify-center h-40 text-slate-400"><svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>O motor de IA está gerando o relatório...</div>`;
             
-            let projData = `Resumo do Projeto:\n`;
+            let projData = `Resumo do Projeto (Auditoria):\n`;
             state.forEach(m => { 
                 m.tasks.forEach(t => { 
-                    projData += `- [Status: ${t.status}] ${t.desc} (Resp: ${t.assignee || 'Sem dono'})\n`; 
+                    projData += `- [Status: ${t.status}] ${t.desc} (Responsável: ${t.assignee || 'N/A'})\n`; 
                 }); 
             });
 
-            const sys = `Você é um Consultor Estratégico. Gere uma Matriz SWOT tática do projeto fornecido. Foque nos status (concluído, atrasado, pendente).
+            const sys = `Você é um Consultor Estratégico de BI. Gere uma Matriz SWOT analítica do projeto com base exclusiva no status das entregas. Seja focado em negócios.
 Formato exato de saída obrigatório:
-## Forças
+## Forças (Pontos Fortes)
 * ...
-## Fraquezas
+## Fraquezas (Gargalos)
 * ...
 ## Oportunidades
 * ...
-## Ameaças
+## Ameaças (Riscos)
 * ...
-## Recomendação Executiva
-(um parágrafo de fechamento)`;
+## Parecer Executivo
+(um parágrafo conciso para a Diretoria)`;
 
             contentDiv.innerHTML = await callGemini(projData, sys);
         };
 
         window.closeSwotModal = () => document.getElementById('modal-swot').classList.add('hidden');
 
-        // ---------------------------------------------------------
-        // CORE DA APLICAÇÃO E FIREBASE
-        // ---------------------------------------------------------
+        function finishLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if(overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 300);
+            }
+        }
+
+        // Fallback de segurança para garantir que a tela sempre destrave (mesmo se a internet cair)
+        setTimeout(finishLoading, 3500);
+
         async function initCloudSync() {
             try {
                 const app = initializeApp(firebaseConfig);
@@ -563,10 +555,12 @@ Formato exato de saída obrigatório:
                 if(auth.currentUser) {
                     isDbConnected = true;
                     listenToUpdates();
+                } else {
+                    finishLoading();
                 }
             } catch(e) {
                 console.error("Erro na conexão com Banco:", e);
-                window.showToast("Modo offline: Falha ao conectar no banco", "error");
+                window.showToast("Modo offline ativo.", "error");
                 state = defaultState;
                 renderMeetings();
                 renderRightPanel();
@@ -596,14 +590,14 @@ Formato exato de saída obrigatório:
                         state = data.meetings;
                     } else {
                         state = defaultState;
-                        window.forceSync(); // Salva estado padrão no banco se estiver vazio
+                        window.forceSync(); 
                     }
                     if(data.logs) auditLogs = data.logs;
                     
                     state.sort((a, b) => parseDateToSort(a.date.split(' ')[0]) - parseDateToSort(b.date.split(' ')[0]));
                 } else {
                     state = defaultState;
-                    window.forceSync(); // Se não existir doc, cria com o default
+                    window.forceSync(); 
                 }
                 renderMeetings();
                 renderRightPanel();
@@ -619,9 +613,10 @@ Formato exato de saída obrigatório:
             const docRef = doc(db, 'artifacts', appId);
             try {
                 await setDoc(docRef, { meetings: state, logs: auditLogs }, { merge: true });
-                window.showToast("Nuvem atualizada!");
+                window.showToast("Alterações salvas na nuvem com sucesso!");
             } catch(e) {
                 console.error("Erro ao salvar:", e);
+                window.showToast("Erro ao gravar. Verifique a permissão do Firebase.", "error");
             }
         };
 
@@ -639,15 +634,6 @@ Formato exato de saída obrigatório:
             if(isDbConnected) window.forceSync();
         }
 
-        function finishLoading() {
-            const overlay = document.getElementById('loading-overlay');
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 300);
-        }
-
-        // ---------------------------------------------------------
-        // RENDERIZAÇÃO E INTERAÇÕES
-        // ---------------------------------------------------------
         function renderRightPanel() {
             const logsContainer = document.getElementById('logs-container');
             logsContainer.innerHTML = '';
@@ -788,7 +774,7 @@ Formato exato de saída obrigatório:
                                         </div>
                                     ` : ''}
 
-                                    <button onclick="window.openAiTaskModal('${task.id}', '${meeting.id}', '${task.desc}', '${task.code}')" class="text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 px-2 py-1 rounded flex items-center gap-1 transition-colors">
+                                    <button onclick="window.openAiTaskModal('${task.id}', '${meeting.id}', '${task.desc.replace(/'/g, "\\'")}', '${task.code}')" class="admin-element text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 px-2 py-1 rounded flex items-center gap-1 transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                                         Auditar (IA)
                                     </button>
@@ -798,7 +784,7 @@ Formato exato de saída obrigatório:
                                 
                                 <div class="flex items-center gap-2 bg-white/80 p-1.5 rounded border border-slate-200 inline-flex shadow-sm">
                                     <svg class="w-3.5 h-3.5 text-slate-400 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                    <input type="text" placeholder="Atribuir responsável..." value="${task.assignee}" onblur="window.updateTaskAssignee('${meeting.id}', '${task.id}', this.value)" class="text-xs bg-transparent border-none outline-none w-48 text-slate-700">
+                                    <input type="text" placeholder="Atribuir a..." value="${task.assignee}" onblur="window.updateTaskAssignee('${meeting.id}', '${task.id}', this.value)" class="text-xs bg-transparent border-none outline-none w-48 text-slate-700">
                                 </div>
                                 ${aiReportHtml}
                             </div>
@@ -826,10 +812,8 @@ Formato exato de saída obrigatório:
         window.updateTaskStatus = (meetingId, taskId, newStatus) => {
             let m = state.find(x => x.id === meetingId);
             let t = m.tasks.find(x => x.id === taskId);
-            
-            if(newStatus === 'delayed' && t.status !== 'delayed') addLog(`🚨 Atraso registado: ${t.code}`);
+            if(newStatus === 'delayed' && t.status !== 'delayed') addLog(`🚨 Atraso registrado em: ${t.code}`);
             if(newStatus.includes('completed') && !t.status.includes('completed')) addLog(`✅ Entrega validada: ${t.code}`);
-            
             t.status = newStatus;
             if(isDbConnected) window.forceSync(); else renderMeetings();
         };
@@ -888,10 +872,12 @@ Formato exato de saída obrigatório:
                 document.getElementById('modal-meeting-title').innerText = "Editar Reunião";
                 document.getElementById('meeting-input-date').value = m.date;
                 document.getElementById('meeting-input-scope').value = m.scope;
+                document.getElementById('btn-delete-meeting').classList.remove('hidden');
             } else {
                 document.getElementById('modal-meeting-title').innerText = "Nova Reunião / Ciclo";
                 document.getElementById('meeting-input-date').value = '';
                 document.getElementById('meeting-input-scope').value = '';
+                document.getElementById('btn-delete-meeting').classList.add('hidden');
             }
             document.getElementById('modal-meeting').classList.remove('hidden');
         };
@@ -901,7 +887,6 @@ Formato exato de saída obrigatório:
             let d = document.getElementById('meeting-input-date').value;
             let s = document.getElementById('meeting-input-scope').value;
             if(!d) return alert("A data/título é obrigatória.");
-
             if(currentEditingMeetingId) {
                 let m = state.find(x => x.id === currentEditingMeetingId);
                 m.date = d; m.scope = s;
@@ -912,10 +897,11 @@ Formato exato de saída obrigatório:
             window.closeMeetingModal();
         };
 
-        window.deleteMeeting = (meetingId) => {
+        window.confirmDeleteMeeting = () => {
             if(confirm("Tem certeza que deseja excluir esta reunião e todas as suas tarefas?")) {
-                state = state.filter(x => x.id !== meetingId);
+                state = state.filter(x => x.id !== currentEditingMeetingId);
                 if(isDbConnected) window.forceSync(); else renderMeetings();
+                window.closeMeetingModal();
             }
         };
 
@@ -935,7 +921,6 @@ Formato exato de saída obrigatório:
             currentEditingTaskId = taskId;
             let m = state.find(x => x.id === meetingId);
             let t = m.tasks.find(x => x.id === taskId);
-            
             document.getElementById('modal-task-title').innerText = "Editar Tarefa";
             document.getElementById('task-input-date').value = t.date;
             document.getElementById('task-input-code').value = t.code;
@@ -951,7 +936,6 @@ Formato exato de saída obrigatório:
             let c = document.getElementById('task-input-code').value;
             let desc = document.getElementById('task-input-desc').value;
             if(!desc) return alert("A descrição é obrigatória.");
-
             let m = state.find(x => x.id === currentEditingMeetingId);
             if(currentEditingTaskId) {
                 let t = m.tasks.find(x => x.id === currentEditingTaskId);
@@ -974,7 +958,6 @@ Formato exato de saída obrigatório:
 
         function updateProgress() {
             let total = 0, completed = 0, delayed = 0, rescheduled = 0, pending = 0;
-
             state.forEach(meeting => {
                 meeting.tasks.forEach(task => {
                     total++;
@@ -1000,7 +983,6 @@ Formato exato de saída obrigatório:
             } else {
                 document.getElementById('circle-progress').classList.replace('text-green-500', 'text-blue-500');
             }
-
             renderAssigneeStats();
         }
 
@@ -1014,13 +996,13 @@ Formato exato de saída obrigatório:
         function renderAssigneeStats() {
             const container = document.getElementById('assignee-stats-list');
             container.innerHTML = '';
-            
             const stats = {};
             state.forEach(meeting => {
                 meeting.tasks.forEach(task => {
-                    if (task.assignee && task.assignee.trim() !== '') {
-                        let key = task.assignee.trim().toLowerCase();
-                        if (!stats[key]) stats[key] = { name: task.assignee.trim(), key: key, total: 0, completed: 0, delayed: 0 };
+                    let assignee = task.assignee.trim();
+                    if (assignee) {
+                        let key = assignee.toLowerCase();
+                        if (!stats[key]) stats[key] = { name: assignee, key: key, total: 0, completed: 0, delayed: 0 };
                         stats[key].total++;
                         if (task.status.includes('completed')) stats[key].completed++;
                         if (task.status === 'delayed') stats[key].delayed++;
@@ -1029,7 +1011,6 @@ Formato exato de saída obrigatório:
             });
 
             const statsArray = Object.values(stats).sort((a, b) => b.total - a.total);
-
             if(statsArray.length === 0) {
                 container.innerHTML = '<p class="text-[11px] text-slate-400 italic bg-slate-50 p-2 rounded border border-slate-100">Atribua tarefas para ativar as métricas.</p>';
                 return;
@@ -1038,7 +1019,6 @@ Formato exato de saída obrigatório:
             statsArray.forEach(stat => {
                 const percent = stat.total === 0 ? 0 : Math.round((stat.completed / stat.total) * 100);
                 const isSelected = currentFilterAssignee === stat.key;
-                
                 const div = document.createElement('div');
                 div.className = `p-2.5 rounded border cursor-pointer transition-all ${isSelected ? 'bg-blue-50 border-blue-300 shadow-sm transform scale-[1.02]' : 'bg-white border-slate-200 hover:border-blue-300'}`;
                 div.onclick = () => window.toggleAssigneeFilter(stat.key);
