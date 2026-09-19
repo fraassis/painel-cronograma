@@ -313,7 +313,7 @@
         };
 
         // CHAVE DA INTELIGÊNCIA ARTIFICIAL ATUALIZADA
-        const GEMINI_API_KEY = "AQ.Ab8RN6LmmYPWmA0C-_O_GYqzFSP7hOxjkjhbcY_BvBO9RUJekw"; 
+        const GEMINI_API_KEY = "AQ.Ab8RN6ItKQT_mgZJMhnehXnGED6urqX0CtOgTdpwttpWgfoYMQ"; 
 
         const appId = 'glicia-auditoria'; 
         let db, auth;
@@ -418,7 +418,10 @@
                 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.error?.message || "Erro na API");
+                    if(err.error?.status === 'UNAUTHENTICATED') {
+                        throw new Error("Chave de API inválida ou rejeitada pelo Google. Certifique-se de gerar a chave selecionando 'Novo Projeto' no AI Studio (A chave deve começar com AIza).");
+                    }
+                    throw new Error(err.error?.message || "Erro desconhecido na API");
                 }
                 
                 const result = await response.json();
