@@ -1,1029 +1,355 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Gestão e Auditoria - Cronograma</title>
+    <title>Painel de Gestão e Auditoria - Glícia</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .task-card { transition: all 0.2s ease; border-left: 4px solid #cbd5e1; }
+        .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .status-concluido { border-left-color: #10b981; background-color: #f0fdf4; }
+        .status-atrasado { border-left-color: #ef4444; background-color: #fef2f2; }
+        .status-reprogramado { border-left-color: #f59e0b; background-color: #fffbeb; }
+        .completed-text { text-decoration: line-through; color: #94a3b8; }
         
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Smooth transitions */
-        .task-row { transition: all 0.3s ease; }
-        
-        /* State styling */
-        .task-completed { background-color: #f0fdf4 !important; border-left-color: #22c55e !important; }
-        .task-completed-late { background-color: #f0fdfa !important; border-left-color: #14b8a6 !important; }
-        .task-delayed { background-color: #fef2f2 !important; border-left-color: #ef4444 !important; }
-        .task-rescheduled { background-color: #fffbeb !important; border-left-color: #f59e0b !important; }
-
-        /* Animação para os botões do Orquestrador */
-        .admin-element { display: none; }
-        .admin-mode-active .admin-element { display: inline-flex; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Estilo para Conteúdo IA */
-        .ai-content h3 { font-size: 1rem; font-weight: bold; color: #1e293b; margin-top: 1rem; margin-bottom: 0.5rem; }
-        .ai-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
-        .ai-content p { margin-bottom: 0.5rem; }
-
-        /* Toast Notifications */
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { background: white; border-left: 4px solid #3b82f6; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .toast.show { transform: translateX(0); }
-        .toast.error { border-left-color: #ef4444; }
-        .toast.success { border-left-color: #22c55e; }
+        /* Modal IA */
+        .modal-ia { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-ia.active { display: flex; }
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid #3b82f6; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="text-slate-800">
 
-    <!-- CABEÇALHO -->
-    <header class="bg-slate-900 text-white z-50 shadow-md flex-shrink-0 sticky top-0">
-        <div class="w-full px-4 py-4 flex flex-wrap justify-between items-center gap-3">
+    <!-- Navbar -->
+    <nav class="bg-slate-900 text-white p-4 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-xl font-bold tracking-tight">Cronograma Oficial de Entregas</h1>
-                <p class="text-slate-400 text-xs mt-0.5">Gestão, Auditoria e Prestação de Contas Semanal • Glicia</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <!-- Botão Sincronizar -->
-                <button onclick="window.forceSync()" id="btn-sync" class="text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded flex items-center gap-2 transition-colors border border-slate-600 shadow-sm">
-                    ☁️ Sincronizar
-                </button>
-                <!-- Botão Orquestrador -->
-                <button onclick="window.requestAdminAccess()" id="btn-admin-login" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 py-1.5 px-3 rounded flex items-center gap-2 transition-colors border border-slate-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    <span class="hidden sm:inline" id="admin-status-text">Orquestrador</span>
-                </button>
+                <h1 class="text-xl font-bold tracking-wide"><i class="fa-solid fa-chart-line mr-2 text-blue-400"></i>Cronograma Oficial de Entregas</h1>
+                <p class="text-xs text-slate-400 mt-1">Gestão, Auditoria e Prestação de Contas Semanal • Glícia</p>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- CORPO PRINCIPAL -->
-    <div class="flex-1 flex flex-col md:flex-row items-stretch">
+    <div class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
         
-        <!-- SIDEBAR ESQUERDA: BI (Resumo de Status) -->
-        <aside class="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 z-10 flex flex-col">
-            <div class="p-6 md:sticky md:top-[72px]">
-                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-                    Resumo Executivo
-                </h2>
-
-                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col items-center justify-center mb-6">
-                    <div class="relative w-40 h-40">
-                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                            <path class="text-slate-200" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path id="circle-progress" class="text-blue-500 transition-all duration-1000 ease-out" stroke-dasharray="0, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span id="progress-text-bi" class="text-4xl font-black text-slate-800">0%</span>
-                            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mt-1">Concluído</span>
+        <!-- BI Lateral Esquerdo -->
+        <div class="col-span-1 space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fa-solid fa-chart-pie mr-2"></i>Resumo Executivo</h2>
+                <div class="flex items-center justify-center mb-4">
+                    <div class="relative w-32 h-32 flex items-center justify-center bg-slate-50 rounded-full border-8 border-slate-100">
+                        <div id="progress-ring" class="absolute top-0 left-0 w-full h-full rounded-full border-8 border-blue-500" style="clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);"></div>
+                        <div class="text-center bg-white w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-inner z-10">
+                            <span id="progress-text" class="text-2xl font-bold text-slate-700">0%</span>
                         </div>
                     </div>
-                    <p class="text-sm font-medium text-slate-500 mt-4 bg-white px-4 py-1.5 rounded-full shadow-sm border border-slate-200">
-                        <span id="total-tasks-bi" class="text-slate-800 font-bold">0</span> tarefas totais mapeadas
-                    </p>
                 </div>
+                <button onclick="gerarSWOT()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition text-sm mb-4">
+                    <i class="fa-solid fa-brain mr-2"></i>Gerar Análise SWOT (IA)
+                </button>
+            </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-8">
-                    <div class="bg-green-50 border border-green-100 rounded-xl p-3 flex flex-col">
-                        <span class="text-green-600 text-[10px] font-bold uppercase tracking-wide mb-1">Validadas</span>
-                        <span id="count-completed" class="text-xl font-black text-green-700">0</span>
-                    </div>
-                    <div class="bg-red-50 border border-red-100 rounded-xl p-3 flex flex-col">
-                        <span class="text-red-500 text-[10px] font-bold uppercase tracking-wide mb-1">Atrasadas</span>
-                        <span id="count-delayed" class="text-xl font-black text-red-600">0</span>
-                    </div>
-                    <div class="bg-orange-50 border border-orange-100 rounded-xl p-3 flex flex-col">
-                        <span class="text-orange-500 text-[10px] font-bold uppercase tracking-wide mb-1">Reprogram.</span>
-                        <span id="count-rescheduled" class="text-xl font-black text-orange-600">0</span>
-                    </div>
-                    <div class="bg-slate-100 border border-slate-200 rounded-xl p-3 flex flex-col">
-                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wide mb-1">Pendentes</span>
-                        <span id="count-pending" class="text-xl font-black text-slate-600">0</span>
-                    </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fa-solid fa-users mr-2"></i>Equipa (Filtro)</h2>
+                <div id="team-stats" class="space-y-3">
+                    <!-- Cards da equipa entram aqui -->
                 </div>
+                <button onclick="limparFiltro()" class="mt-4 text-xs text-blue-500 hover:text-blue-700 w-full text-center hidden" id="btn-limpar-filtro">Limpar Filtro</button>
+            </div>
+        </div>
 
-                <!-- Botão Gerar Matriz SWOT (IA) -->
-                <div class="mb-8">
-                    <button onclick="window.openSwotModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-md">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                        Gerar Análise Estratégica (IA)
+        <!-- Área Central - Tarefas -->
+        <div class="col-span-1 md:col-span-3">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-bold text-slate-700 mb-6 border-b pb-2"><i class="fa-regular fa-calendar-check mr-2"></i>Auditoria Detalhada (Ordem Cronológica)</h2>
+                <div id="tasks-container" class="space-y-4">
+                    <!-- Tarefas entram aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal IA -->
+    <div id="modalIA" class="modal-ia">
+        <div class="bg-white rounded-xl shadow-2xl w-11/12 md:w-1/2 overflow-hidden">
+            <div class="bg-indigo-600 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold"><i class="fa-solid fa-robot mr-2"></i>Assistente de Auditoria IA</h3>
+                <button onclick="fecharModal()" class="text-white hover:text-slate-200"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-slate-600 mb-4">Cole abaixo os apontamentos ou o conteúdo do relatório para que a Inteligência Artificial faça a validação e gere o resumo executivo desta entrega.</p>
+                <textarea id="ia-input" class="w-full h-32 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none mb-4" placeholder="Ex: Analisei o ficheiro Excel e encontrei 5 contas divergentes..."></textarea>
+                <input type="hidden" id="ia-task-id">
+                <div class="flex justify-end gap-3">
+                    <button onclick="fecharModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                    <button onclick="processarIA()" id="btn-processar-ia" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center font-medium">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Auditar com IA
                     </button>
                 </div>
-
-                <div class="border-t border-slate-200 pt-6 pb-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                            Performance da Equipe
-                        </h2>
-                        <button id="clear-filter-btn" onclick="toggleAssigneeFilter(null)" class="hidden text-[10px] font-bold bg-slate-200 text-slate-600 hover:bg-slate-300 px-2 py-1 rounded transition-colors shadow-sm">Limpar Filtro</button>
-                    </div>
-                    <div id="assignee-stats-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                        <!-- Conteúdo injetado via JS -->
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <!-- CENTRO: TAREFAS CRONOLÓGICAS -->
-        <main class="flex-1 p-4 md:p-8 bg-slate-50/50">
-            <div class="max-w-4xl mx-auto" id="app-container">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-2 border-b border-slate-200">
-                    <div class="flex items-center gap-3">
-                        <svg class="text-slate-400" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                        <h2 class="text-lg font-bold text-slate-700">Auditoria Detalhada (Ordem Cronológica)</h2>
-                    </div>
-                    <button onclick="window.openMeetingModal()" class="admin-element text-sm bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-4 rounded-lg items-center gap-2 font-medium shadow-sm transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Novo Ciclo / Reunião
-                    </button>
-                </div>
-                
-                <div id="meetings-container" class="space-y-6 pb-20">
-                    <!-- As reuniões e tarefas serão injetadas aqui via JavaScript -->
-                </div>
-            </div>
-        </main>
-
-        <!-- SIDEBAR DIREITA: CALENDÁRIO E LOGS -->
-        <aside class="w-full xl:w-72 bg-white border-l border-slate-200 shadow-sm flex-shrink-0 z-10 flex flex-col hidden xl:flex">
-            <div class="p-6 md:sticky md:top-[72px] max-h-screen overflow-y-auto">
-                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    Calendário de Eventos
-                </h2>
-                <div id="calendar-container" class="mb-8">
-                    <!-- Calendário injetado via JS -->
-                </div>
-
-                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                    Log de Auditoria
-                </h2>
-                <div id="logs-container" class="space-y-1">
-                    <!-- Logs injetados via JS -->
-                </div>
-            </div>
-        </aside>
-    </div>
-
-    <!-- Container de Toast Notifications -->
-    <div id="toast-container"></div>
-
-    <!-- Overlay de Carregamento -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
-        <svg class="animate-spin h-10 w-10 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        <p class="text-slate-600 font-semibold text-sm">Sincronizando banco de dados colaborativo...</p>
-    </div>
-
-    <!-- Modal Orquestrador (Senha) -->
-    <div id="modal-auth" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full transform transition-all">
-            <h3 class="text-lg font-bold text-slate-800 mb-2">Acesso Restrito</h3>
-            <p class="text-slate-500 text-xs mb-4">Insira a senha do orquestrador para adicionar ou editar a estrutura do cronograma.</p>
-            <input type="password" id="admin-password-input" placeholder="Senha Mestra (glicia2026)" class="w-full border border-slate-300 rounded-lg px-3 py-2 mb-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-            
-            <div id="auth-error" class="hidden text-red-500 text-xs font-bold mb-4">Senha incorreta.</div>
-            <div class="flex justify-end gap-2">
-                <button onclick="window.closeAuthModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
-                <button onclick="window.verifyAdmin()" class="px-4 py-2 rounded-lg text-sm font-bold bg-slate-800 text-white hover:bg-slate-900 shadow-sm">Entrar</button>
+                <div id="ia-result" class="mt-4 hidden p-4 bg-slate-50 border rounded-lg text-sm"></div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Tarefa (Adicionar/Editar) -->
-    <div id="modal-task" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full transform transition-all">
-            <h3 id="modal-task-title" class="text-lg font-bold text-slate-800 mb-4">Adicionar Tarefa</h3>
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Data (Ex: 15/09)</label>
-                        <input type="text" id="task-input-date" placeholder="DD/MM" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1">Referência (Ex: 4.1)</label>
-                        <input type="text" id="task-input-code" placeholder="Cód." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Descrição da Entrega</label>
-                    <textarea id="task-input-desc" rows="3" placeholder="Descreva o que precisa ser feito..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 resize-none"></textarea>
-                </div>
+    <!-- Modal SWOT -->
+    <div id="modalSWOT" class="modal-ia">
+        <div class="bg-white rounded-xl shadow-2xl w-11/12 md:w-2/3 overflow-hidden">
+            <div class="bg-slate-800 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold"><i class="fa-solid fa-chart-line mr-2"></i>Análise Estratégica do Negócio (SWOT)</h3>
+                <button onclick="fecharModalSWOT()" class="text-white hover:text-slate-200"><i class="fa-solid fa-times text-xl"></i></button>
             </div>
-            <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100">
-                <button id="btn-delete-task" onclick="window.confirmDeleteTask()" class="hidden px-3 py-2 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> Excluir
-                </button>
-                <div class="flex gap-2 ml-auto">
-                    <button onclick="window.closeTaskModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
-                    <button onclick="window.saveTaskData()" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm">Salvar Alterações</button>
+            <div class="p-6 h-96 overflow-y-auto" id="swot-content">
+                <div class="flex items-center justify-center h-full text-slate-500">
+                    <div class="spinner mr-3"></div> Gerando análise com base no estado do projeto...
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Reunião (Adicionar/Editar) -->
-    <div id="modal-meeting" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full transform transition-all">
-            <h3 id="modal-meeting-title" class="text-lg font-bold text-slate-800 mb-4">Nova Reunião / Ciclo</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Título/Data da Reunião (Ex: 05/10)</label>
-                    <input type="text" id="meeting-input-date" placeholder="DD/MM" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">Pauta / Escopo do Ciclo</label>
-                    <textarea id="meeting-input-scope" rows="2" placeholder="Prestação de contas das entregas de..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 resize-none"></textarea>
-                </div>
-            </div>
-            <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100 gap-2">
-                <button id="btn-delete-meeting" onclick="window.confirmDeleteMeeting()" class="hidden px-3 py-2 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-1">Excluir Ciclo</button>
-                <div class="flex gap-2 ml-auto">
-                    <button onclick="window.closeMeetingModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
-                    <button onclick="window.saveMeetingData()" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm">Salvar Reunião</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script>
+        // === CONFIGURAÇÃO DA CHAVE API DO GEMINI ===
+        // Cole a sua chave entre as aspas abaixo para ativar a Inteligência Artificial.
+        const GEMINI_API_KEY = "AQ.Ab8RN6LmmYPWmA0C-_O_GYqzFSP7hOxjkjhbcY_BvBO9RUJekw"; 
 
-    <!-- MODAIS DE INTELIGÊNCIA ARTIFICIAL -->
-    
-    <!-- Modal Análise SWOT (IA) -->
-    <div id="modal-swot" class="hidden fixed inset-0 bg-slate-900/80 z-[120] flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl w-full flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-100">
-                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <svg class="text-indigo-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                    Análise Estratégica SWOT (IA)
-                </h3>
-                <button onclick="window.closeSwotModal()" class="text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </div>
-            <div id="swot-content" class="flex-1 overflow-y-auto ai-content text-sm text-slate-700 pr-2"></div>
-        </div>
-    </div>
+        // === DADOS INICIAIS (A base que estava em falta) ===
+        const dadosIniciais = [
+            { id: 1, date: "12/09", title: "5.1. Mobilização e diagnóstico", status: "pendente", assignee: "", log: "" },
+            { id: 2, date: "14/09", title: "1.2. Aquisição IA – Empresarial", status: "pendente", assignee: "", log: "" },
+            { id: 3, date: "14/09", title: "2.1. Atualizar e implantar política de despesas", status: "pendente", assignee: "", log: "" },
+            { id: 4, date: "15/09", title: "3.1. Homologação da base para testagem", status: "pendente", assignee: "", log: "" },
+            { id: 5, date: "17/09", title: "7.1. Diagnóstico: Levantamento dos últimos 12 meses", status: "pendente", assignee: "", log: "" },
+            { id: 6, date: "23/09", title: "3.4. Parametrizar tabelas por estados", status: "pendente", assignee: "", log: "" },
+            { id: 7, date: "24/09", title: "7.3. Segmentação: Classificar ABC", status: "pendente", assignee: "", log: "" },
+            { id: 8, date: "30/09", title: "8.1. Medir indicadores para desvios", status: "pendente", assignee: "", log: "" },
+            { id: 9, date: "07/10", title: "2.3. Reclassificação de despesas por centro de custo", status: "pendente", assignee: "", log: "" },
+            { id: 10, date: "10/10", title: "5.2. Saneamento do banco Winthor", status: "pendente", assignee: "", log: "" },
+            { id: 11, date: "03/11", title: "7.7. Desenvolver indicadores e estruturar dashboard", status: "pendente", assignee: "", log: "" },
+            { id: 12, date: "07/12", title: "9.1. Garantir resultado sustentável", status: "pendente", assignee: "", log: "" }
+        ];
 
-    <!-- Modal IA Auditoria de Tarefa -->
-    <div id="modal-ai-task" class="hidden fixed inset-0 bg-slate-900/80 z-[120] flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-xl w-full flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <svg class="text-indigo-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                    Guardião de Auditoria (IA)
-                </h3>
-                <button onclick="window.closeAiTaskModal()" class="text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            </div>
-            
-            <div class="mb-4">
-                <p class="text-xs text-slate-500 mb-2"><strong>Tarefa Exigida:</strong> <span id="ai-task-desc-display"></span></p>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Cole aqui o conteúdo bruto do Relatório, Ata ou Notas da Entrega para validação:</label>
-                <textarea id="ai-task-input" rows="5" class="w-full border border-slate-300 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none" placeholder="A IA lerá este conteúdo, validará se comprova a entrega exigida, e criará um resumo padronizado."></textarea>
-            </div>
-            
-            <div id="ai-task-result-container" class="hidden mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-                <h4 class="text-xs font-bold text-indigo-800 mb-2 uppercase tracking-wide">Avaliação da Inteligência Artificial</h4>
-                <div id="ai-task-result" class="ai-content text-sm text-slate-700"></div>
-            </div>
+        // Carrega dados da memória do navegador, ou usa os dados iniciais
+        let tasks = JSON.parse(localStorage.getItem('glicia_tasks')) || dadosIniciais;
+        let filtroAtual = null;
 
-            <div class="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
-                <button onclick="window.generateAiTaskAudit()" id="btn-generate-ai" class="px-4 py-2 rounded-lg text-sm font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors flex items-center gap-2">
-                    Analisar Conteúdo
-                </button>
-                <button onclick="window.saveAiTaskAudit()" id="btn-save-ai" class="hidden px-4 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-colors">
-                    Aprovar e Anexar Resumo
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPTS CORE E FIREBASE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // =========================================================================
-        // CONFIGURAÇÕES (BANCO DE DADOS E INTELIGÊNCIA ARTIFICIAL)
-        // =========================================================================
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyD-YEtxZkGOA4tuleo2zkRxBLOFXWYJ2ko",
-            authDomain: "cronogramaotimaaudit.firebaseapp.com",
-            projectId: "cronogramaotimaaudit",
-            storageBucket: "cronogramaotimaaudit.firebasestorage.app",
-            messagingSenderId: "421525034998",
-            appId: "1:421525034998:web:3144f96888ea4be39fd9d7"
-        };
-
-        // CHAVE DA INTELIGÊNCIA ARTIFICIAL (Embutida no código)
-        // DICA DE SEGURANÇA: Vá no Google Cloud Console > APIs e Serviços > Credenciais.
-        // Procure essa chave da API do Gemini lá e adicione a "Restrição de Aplicativo" (Sites HTTP).
-        // Digite: https://fraassis.github.io/*
-        // Dessa forma, mesmo que a chave esteja aqui no código, nenhum hacker poderá roubá-la
-        // para usar em outro site, pois o Google bloqueará pedidos que não venham do seu site!
-        const GEMINI_API_KEY = "SUA_CHAVE_GEMINI_AQUI"; 
-
-        const appId = 'glicia-auditoria'; 
-        let db, auth;
-        let isDbConnected = false;
-
-        // Estado Global
-        let state = [];
-        let auditLogs = [];
-        let currentFilterAssignee = null;
-        let isAdmin = false;
-        let currentEditingMeetingId = null;
-        let currentEditingTaskId = null;
-
-        // Sistema de Notificações
-        window.showToast = function(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast text-sm font-medium text-slate-700 ${type}`;
-            let icon = type === 'error' ? '🚨' : '✅';
-            toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
+        function salvarDados() {
+            localStorage.setItem('glicia_tasks', JSON.stringify(tasks));
+            renderDashboard();
         }
 
-        // ---------------------------------------------------------
-        // MOTOR DE INTELIGÊNCIA ARTIFICIAL (GEMINI API)
-        // ---------------------------------------------------------
-        async function callGemini(userQuery, systemPrompt) {
-            if(!GEMINI_API_KEY || GEMINI_API_KEY === "SUA_CHAVE_GEMINI_AQUI") {
-                return "⚠️ **Aviso de Configuração:** A chave da API do Gemini não foi configurada no código. Edite o arquivo index.html e insira sua chave na variável GEMINI_API_KEY para habilitar os recursos de inteligência artificial.";
+        function atualizarStatus(id, novoStatus) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.status = novoStatus;
+                salvarDados();
+            }
+        }
+
+        function atualizarResponsavel(id, nome) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.assignee = nome;
+                salvarDados();
+            }
+        }
+
+        function filtrarPor(nome) {
+            filtroAtual = nome;
+            document.getElementById('btn-limpar-filtro').classList.remove('hidden');
+            renderTasks();
+        }
+
+        function limparFiltro() {
+            filtroAtual = null;
+            document.getElementById('btn-limpar-filtro').classList.add('hidden');
+            renderTasks();
+        }
+
+        function renderDashboard() {
+            renderTasks();
+            renderStats();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+            
+            let tarefasParaMostrar = tasks;
+            if (filtroAtual) {
+                tarefasParaMostrar = tasks.filter(t => t.assignee.toLowerCase() === filtroAtual.toLowerCase());
             }
 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            if (tarefasParaMostrar.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-400 italic">Nenhuma tarefa encontrada.</p>';
+                return;
+            }
+
+            tarefasParaMostrar.forEach(task => {
+                let statusClass = '';
+                let isChecked = false;
+                
+                if (task.status === 'concluido') { statusClass = 'status-concluido'; isChecked = true; }
+                else if (task.status === 'atrasado') { statusClass = 'status-atrasado'; }
+                
+                container.innerHTML += `
+                    <div class="task-card bg-slate-50 p-4 rounded-lg border border-slate-200 ${statusClass}">
+                        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded shadow-sm">${task.date}</span>
+                                    <select onchange="atualizarStatus(${task.id}, this.value)" class="text-xs border-slate-300 rounded p-1 text-slate-600 bg-white cursor-pointer focus:ring-0">
+                                        <option value="pendente" ${task.status === 'pendente' ? 'selected' : ''}>⏱ Pendente</option>
+                                        <option value="concluido" ${task.status === 'concluido' ? 'selected' : ''}>✅ Concluído</option>
+                                        <option value="atrasado" ${task.status === 'atrasado' ? 'selected' : ''}>🚨 Atrasado</option>
+                                    </select>
+                                </div>
+                                <p class="text-sm font-medium ${isChecked ? 'completed-text' : 'text-slate-700'}">${task.title}</p>
+                                
+                                <!-- Bloco da IA (Resumo) -->
+                                ${task.log ? `<div class="mt-3 p-3 bg-white border border-indigo-100 rounded text-xs text-slate-600 shadow-sm border-l-2 border-l-indigo-400"><strong><i class="fa-solid fa-robot text-indigo-500 mr-1"></i> Auditoria IA:</strong><br>${task.log}</div>` : ''}
+                                
+                            </div>
+                            <div class="flex flex-col gap-2 min-w-[150px]">
+                                <input type="text" placeholder="Atribuir a..." value="${task.assignee || ''}" onchange="atualizarResponsavel(${task.id}, this.value)" class="text-xs p-2 border rounded shadow-inner focus:outline-blue-400 w-full">
+                                <button onclick="abrirModalIA(${task.id})" class="text-xs bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 font-medium py-1.5 px-2 rounded w-full transition flex items-center justify-center">
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Auditar IA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderStats() {
+            const total = tasks.length;
+            const concluidas = tasks.filter(t => t.status === 'concluido').length;
+            const percentage = total === 0 ? 0 : Math.round((concluidas / total) * 100);
+            
+            document.getElementById('progress-text').innerText = `${percentage}%`;
+            
+            // BI da Equipa
+            const teamStats = {};
+            tasks.forEach(t => {
+                if (t.assignee) {
+                    const nome = t.assignee.trim();
+                    if (!teamStats[nome]) teamStats[nome] = { total: 0, concluidas: 0 };
+                    teamStats[nome].total++;
+                    if (t.status === 'concluido') teamStats[nome].concluidas++;
+                }
+            });
+
+            const teamContainer = document.getElementById('team-stats');
+            teamContainer.innerHTML = '';
+            
+            if (Object.keys(teamStats).length === 0) {
+                teamContainer.innerHTML = '<p class="text-xs text-slate-400 italic">Atribua tarefas para ver o desempenho.</p>';
+            }
+
+            for (const [nome, stats] of Object.entries(teamStats)) {
+                const p = Math.round((stats.concluidas / stats.total) * 100);
+                teamContainer.innerHTML += `
+                    <div onclick="filtrarPor('${nome}')" class="bg-slate-50 border rounded-lg p-3 cursor-pointer hover:bg-blue-50 transition ${filtroAtual === nome ? 'border-blue-500 ring-1 ring-blue-500' : ''}">
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span>${nome}</span>
+                            <span class="${p === 100 ? 'text-green-600' : 'text-blue-600'}">${p}%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-1.5">
+                            <div class="bg-${p === 100 ? 'green' : 'blue'}-500 h-1.5 rounded-full" style="width: ${p}%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">${stats.concluidas} de ${stats.total} entregas</p>
+                    </div>
+                `;
+            }
+        }
+
+        // === LÓGICA DA IA (GEMINI) ===
+        function abrirModalIA(id) {
+            document.getElementById('ia-task-id').value = id;
+            document.getElementById('ia-input').value = '';
+            document.getElementById('ia-result').classList.add('hidden');
+            document.getElementById('modalIA').classList.add('active');
+        }
+        
+        function fecharModal() {
+            document.getElementById('modalIA').classList.remove('active');
+        }
+
+        function fecharModalSWOT() {
+            document.getElementById('modalSWOT').classList.remove('active');
+        }
+
+        async function chamarGeminiAPI(promptText) {
+            if (GEMINI_API_KEY === "SUA_CHAVE_AQUI") {
+                return "Erro: A chave da API não foi configurada no código fonte.";
+            }
             
             try {
-                const response = await fetch(apiUrl, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: { temperature: 0.3 } // Mais focado e menos criativo para auditoria
+                        contents: [{ parts: [{ text: promptText }] }]
                     })
                 });
                 
-                if (!response.ok) throw new Error("Erro na resposta da API.");
-                
-                const result = await response.json();
-                
-                if(result.candidates && result.candidates[0].content) {
-                    let text = result.candidates[0].content.parts[0].text;
-                    // Formatação Visual Básica (Markdown para HTML simples)
-                    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                    text = text.replace(/## (.*?)\n/g, '<h3>$1</h3>');
-                    text = text.replace(/\* (.*?)\n/g, '<li>$1</li>');
-                    text = text.replace(/<li>/g, '<ul class="list-disc pl-4"><li>').replace(/<\/li>\n(?!<li>)/g, '</li></ul>');
-                    text = text.replace(/\n/g, '<br>');
-                    return text;
-                }
-                return "Não foi possível gerar a análise. A IA não retornou um conteúdo válido.";
-            } catch(e) {
-                console.error(e);
-                return "🚨 **Erro de Conexão:** Falha ao se comunicar com o servidor da Inteligência Artificial do Google. Verifique se a chave é válida ou se há restrições bloqueando o site.";
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error(error);
+                return "Falha ao conectar à IA: " + error.message;
             }
         }
 
-        let currentAiTaskId = null;
-        let currentAiReportDraft = null;
-
-        window.openAiTaskModal = (taskId, meetingId, desc, code) => {
-            currentAiTaskId = { task: taskId, meeting: meetingId };
-            document.getElementById('ai-task-desc-display').innerText = `[${code}] ${desc}`;
-            document.getElementById('ai-task-input').value = '';
-            document.getElementById('ai-task-result-container').classList.add('hidden');
-            document.getElementById('btn-save-ai').classList.add('hidden');
-            document.getElementById('btn-generate-ai').innerHTML = 'Analisar Conteúdo';
-            document.getElementById('modal-ai-task').classList.remove('hidden');
-        };
-
-        window.closeAiTaskModal = () => document.getElementById('modal-ai-task').classList.add('hidden');
-
-        window.generateAiTaskAudit = async () => {
-            const rawContent = document.getElementById('ai-task-input').value.trim();
-            if(!rawContent) { alert("Cole o conteúdo bruto, ata ou resumo da entrega primeiro."); return; }
-
-            const btn = document.getElementById('btn-generate-ai');
-            btn.innerHTML = '⏱ Processando Documento (Pode levar alguns segundos)...';
-            btn.disabled = true;
-
-            const systemPrompt = `Você é um Consultor Sênior e Guardião de Auditoria de Projetos. Sua função é analisar o texto bruto colado pelo usuário e verificar rigorosamente se ele comprova a execução da Tarefa Exigida no escopo da empresa.
-Regras Restritas:
-1. Se o texto for vago, irrelevante, ou não comprovar o que a tarefa pede, responda INICIANDO A FRASE EXATAMENTE COM: "ERRO: O conteúdo fornecido não atende ou não comprova a entrega exigida." e explique o porquê em uma linha.
-2. Se fizer sentido e for coerente com a tarefa, ignore problemas de digitação do usuário, extraia as informações essenciais e crie um Resumo Executivo em no máximo 3 bullet points limpos, diretos e formais para compor o log de auditoria.`;
+        async function processarIA() {
+            const id = parseInt(document.getElementById('ia-task-id').value);
+            const input = document.getElementById('ia-input').value;
+            const btn = document.getElementById('btn-processar-ia');
+            const resultDiv = document.getElementById('ia-result');
             
-            const taskDesc = document.getElementById('ai-task-desc-display').innerText;
-            const aiResponse = await callGemini(`Tarefa Exigida na Auditoria: ${taskDesc}\n\nConteúdo Fornecido pelo Responsável:\n"${rawContent}"`, systemPrompt);
+            if (!input.trim()) return alert('Cole o relatório primeiro.');
+
+            const task = tasks.find(t => t.id === id);
+            btn.innerHTML = '<div class="spinner border-t-white w-4 h-4 mr-2"></div> Processando...';
             
-            currentAiReportDraft = aiResponse;
-            document.getElementById('ai-task-result').innerHTML = aiResponse;
-            document.getElementById('ai-task-result-container').classList.remove('hidden');
+            const prompt = `Atue como um auditor rigoroso de projetos. A tarefa exigida era: "${task.title}". O responsável enviou o seguinte texto de prestação de contas: "${input}". 
+            Regra 1: Se o texto for irrelevante ou não provar que a tarefa foi feita, responda APENAS: "ERRO: O conteúdo submetido não atende aos requisitos desta entrega."
+            Regra 2: Se for válido, crie um resumo executivo em 3 bullet points curtos (use o símbolo •) destacando as métricas ou ações principais que comprovem a conclusão. Não adicione saudações.`;
+
+            const respostaIA = await chamarGeminiAPI(prompt);
             
-            if(aiResponse.includes("ERRO:")) {
-                document.getElementById('btn-save-ai').classList.add('hidden'); // Impede salvar
+            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Auditar com IA';
+            
+            if (respostaIA.includes("ERRO:")) {
+                resultDiv.innerHTML = `<span class="text-red-600 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Rejeitado pela IA:</span><br>${respostaIA}`;
+                resultDiv.classList.remove('hidden');
             } else {
-                document.getElementById('btn-save-ai').classList.remove('hidden'); // Libera aprovação
+                task.log = respostaIA.replace(/\n/g, '<br>');
+                task.status = 'concluido';
+                salvarDados();
+                fecharModal();
             }
+        }
 
-            btn.innerHTML = 'Refazer Análise';
-            btn.disabled = false;
-        };
-
-        window.saveAiTaskAudit = async () => {
-            if(currentAiTaskId && currentAiReportDraft) {
-                let meeting = state.find(m => m.id === currentAiTaskId.meeting);
-                if(meeting) {
-                    let task = meeting.tasks.find(t => t.id === currentAiTaskId.task);
-                    if(task) {
-                        task.aiReport = currentAiReportDraft;
-                        task.status = "completed_on_time"; // Auto-aprova
-                        window.showToast("Auditoria validada pela IA e salva no escopo com sucesso!");
-                        if(isDbConnected) {
-                            await window.forceSync();
-                        } else {
-                            renderMeetings();
-                        }
-                    }
-                }
-                window.closeAiTaskModal();
-            }
-        };
-
-        window.openSwotModal = async () => {
-            document.getElementById('modal-swot').classList.remove('hidden');
+        async function gerarSWOT() {
+            document.getElementById('modalSWOT').classList.add('active');
             const contentDiv = document.getElementById('swot-content');
-            contentDiv.innerHTML = `<div class="flex flex-col items-center justify-center h-40 text-slate-400"><svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>O motor de IA está cruzando os dados do banco e gerando o relatório...</div>`;
             
-            let projData = `Resumo do Projeto Atual (Auditoria):\n`;
-            state.forEach(m => { 
-                m.tasks.forEach(t => { 
-                    projData += `- [Status: ${t.status}] ${t.desc} (Responsável: ${t.assignee || 'Não definido'})\n`; 
-                }); 
-            });
-
-            const sys = `Você é um Consultor Estratégico de Business Intelligence (BI). Gere uma Matriz SWOT analítica do projeto fornecido com base exclusiva no status das entregas. Cruze informações de tarefas atrasadas, falta de responsáveis, gargalos e sucessos.
-Seja direto, profissional e focado em negócios.
-Formato exato de saída obrigatório:
-## Forças (Pontos Fortes)
-* ...
-## Fraquezas (Gargalos)
-* ...
-## Oportunidades
-* ...
-## Ameaças (Riscos)
-* ...
-## Parecer Executivo
-(um parágrafo conciso de recomendação para a Diretoria)`;
-
-            contentDiv.innerHTML = await callGemini(projData, sys);
-        };
-
-        window.closeSwotModal = () => document.getElementById('modal-swot').classList.add('hidden');
-
-
-        // ---------------------------------------------------------
-        // CORE DA APLICAÇÃO E FIREBASE
-        // ---------------------------------------------------------
-        async function initCloudSync() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                await signInAnonymously(auth);
-
-                if(auth.currentUser) {
-                    isDbConnected = true;
-                    listenToUpdates();
-                }
-            } catch(e) {
-                console.error("Erro na conexão com Banco:", e);
-                window.showToast("Modo offline: Falha ao conectar no banco", "error");
-                finishLoading();
-            }
-        }
-
-        // Função utilitária de conversão de data (DD/MM para comparador)
-        function parseDateToSort(dateStr) {
-            const parts = dateStr.split('/');
-            if(parts.length === 2) {
-                let day = parts[0].padStart(2, '0');
-                let month = parts[1].padStart(2, '0');
-                return parseInt(`2026${month}${day}`);
-            }
-            if(parts.length === 3) {
-                return parseInt(`${parts[2]}${parts[1].padStart(2, '0')}${parts[0].padStart(2, '0')}`);
-            }
-            return 99999999;
-        }
-
-        function listenToUpdates() {
-            const docRef = doc(db, 'artifacts', appId);
-            onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if(data.meetings) state = data.meetings;
-                    if(data.logs) auditLogs = data.logs;
-                    
-                    // Ordenação Cronológica Automática
-                    state.sort((a, b) => parseDateToSort(a.date.split(' ')[0]) - parseDateToSort(b.date.split(' ')[0]));
-                }
-                renderMeetings();
-                renderRightPanel();
-                finishLoading();
-            }, (error) => {
-                console.error("Erro ao escutar firebase:", error);
-                finishLoading();
-            });
-        }
-
-        window.forceSync = async () => {
-            if(!isDbConnected) {
-                window.showToast("Erro: Banco de dados não conectado.", "error");
-                return;
-            }
-            const docRef = doc(db, 'artifacts', appId);
-            try {
-                await setDoc(docRef, { meetings: state, logs: auditLogs }, { merge: true });
-                window.showToast("Alterações salvas na nuvem com sucesso!");
-            } catch(e) {
-                console.error("Erro ao salvar:", e);
-                window.showToast("Erro de permissão no Firebase. As alterações NÃO foram salvas.", "error");
-            }
-        };
-
-        function addLog(message) {
-            const date = new Date().toLocaleDateString('pt-BR');
-            auditLogs.unshift({ date: date, message: message, id: 'log-' + Date.now() });
-            if(auditLogs.length > 30) auditLogs.pop();
-            renderRightPanel();
-            if(isDbConnected) window.forceSync();
-        }
-
-        window.deleteLog = (logId) => {
-            auditLogs = auditLogs.filter(l => l.id !== logId);
-            renderRightPanel();
-            if(isDbConnected) window.forceSync();
-        }
-
-        function finishLoading() {
-            const overlay = document.getElementById('loading-overlay');
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 300);
-        }
-
-        // ---------------------------------------------------------
-        // RENDERIZAÇÃO E INTERAÇÕES
-        // ---------------------------------------------------------
-        function renderRightPanel() {
-            // Render Logs
-            const logsContainer = document.getElementById('logs-container');
-            logsContainer.innerHTML = '';
+            const pendentes = tasks.filter(t => t.status === 'pendente').map(t => t.title).join(", ");
+            const concluidas = tasks.filter(t => t.status === 'concluido').map(t => t.title).join(", ");
             
-            if(auditLogs.length === 0) {
-                logsContainer.innerHTML = '<p class="text-xs text-slate-400 italic">Nenhum evento registrado ainda.</p>';
-            } else {
-                auditLogs.forEach(log => {
-                    logsContainer.innerHTML += `
-                        <div class="bg-slate-50 border border-slate-100 p-2.5 rounded text-xs flex justify-between items-start group">
-                            <div><span class="text-slate-400 font-bold block mb-0.5">${log.date}</span><span class="text-slate-600">${log.message}</span></div>
-                            <button onclick="window.deleteLog('${log.id}')" class="text-slate-300 hover:text-red-500 hidden group-hover:block ml-2 admin-element transition-colors">✕</button>
-                        </div>
-                    `;
-                });
-            }
-
-            // Render Mini Calendário Visual (Mapeando as datas das tarefas ativas)
-            const calContainer = document.getElementById('calendar-container');
-            calContainer.innerHTML = '';
-            const months = ['SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+            const prompt = `Baseado neste projeto corporativo de otimização e processos (ERP, dados, gestão). Tarefas já concluídas com sucesso: [${concluidas}]. Tarefas ainda pendentes/em risco: [${pendentes}]. 
+            Gere uma Matriz SWOT focada na gestão deste projeto. Formate em HTML simples (usando <b> e <br>) sem tags markdown. Mantenha direto e profissional.`;
             
-            // Map de dias com tarefas { "15/09": "late", "17/09": "done" }
-            const dayStatusMap = {};
-            state.forEach(m => m.tasks.forEach(t => {
-                let statusColor = "bg-blue-100 text-blue-700 font-bold"; // Pendente
-                if(t.status === 'delayed') statusColor = "bg-red-100 text-red-700 font-bold";
-                else if(t.status === 'rescheduled') statusColor = "bg-orange-100 text-orange-700 font-bold";
-                else if(t.status.includes('completed')) statusColor = "bg-green-100 text-green-700 font-bold";
-                
-                dayStatusMap[t.date] = statusColor;
-                if(t.newDate) {
-                    const pts = t.newDate.split('-'); // YYYY-MM-DD to DD/MM
-                    if(pts.length === 3) dayStatusMap[`${pts[2]}/${pts[1]}`] = statusColor;
-                }
-            }));
-
-            months.forEach((month, idx) => {
-                let monthNum = (idx + 9).toString().padStart(2, '0');
-                let html = `<div class="mb-4"><h3 class="text-[10px] font-bold text-slate-400 mb-2">${month}</h3><div class="grid grid-cols-7 gap-1">`;
-                for(let i=1; i<=31; i++) {
-                    // Pula dias inválidos (setembro/novembro tem 30)
-                    if((idx===0 || idx===2) && i===31) continue;
-                    let dayStr = `${i.toString().padStart(2, '0')}/${monthNum}`;
-                    let cls = dayStatusMap[dayStr] ? dayStatusMap[dayStr] : "bg-slate-50 text-slate-300";
-                    html += `<div class="h-6 flex items-center justify-center rounded text-[10px] ${cls}">${i}</div>`;
-                }
-                html += `</div></div>`;
-                calContainer.innerHTML += html;
-            });
+            const respostaIA = await chamarGeminiAPI(prompt);
+            contentDiv.innerHTML = `<div class="text-sm text-slate-700 leading-relaxed">${respostaIA}</div>`;
         }
 
-        function renderMeetings() {
-            const container = document.getElementById('meetings-container');
-            container.innerHTML = '';
-
-            state.forEach((meeting) => {
-                const visibleTasks = meeting.tasks.filter(t => !currentFilterAssignee || t.assignee.trim().toLowerCase() === currentFilterAssignee);
-                if (visibleTasks.length === 0 && currentFilterAssignee) return; 
-
-                const totalMTasks = visibleTasks.length;
-                const completedMTasks = visibleTasks.filter(t => t.status.includes('completed')).length;
-                const isMeetingComplete = totalMTasks === completedMTasks && totalMTasks > 0;
-
-                const meetingCard = document.createElement('div');
-                meetingCard.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6";
-                
-                const header = document.createElement('div');
-                header.className = `p-5 border-b border-slate-100 flex justify-between items-start sm:items-center transition-colors ${isMeetingComplete ? 'bg-green-50' : 'bg-slate-50'}`;
-                header.innerHTML = `
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <h3 class="text-lg font-bold text-slate-800">Reunião: ${meeting.date}</h3>
-                            ${isMeetingComplete ? '<span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wide">✓ Auditado</span>' : ''}
-                            <div class="admin-element ml-2 space-x-2">
-                                <button onclick="window.editMeeting('${meeting.id}')" class="text-slate-400 hover:text-blue-500"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
-                                <button onclick="window.deleteMeeting('${meeting.id}')" class="text-slate-400 hover:text-red-500"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
-                            </div>
-                        </div>
-                        <p class="text-sm text-slate-500 mt-1">Pauta: ${meeting.scope}</p>
-                    </div>
-                    <div class="text-right mt-2 sm:mt-0">
-                        <span class="text-sm font-medium ${isMeetingComplete ? 'text-green-600' : 'text-slate-500'}">
-                            ${completedMTasks} / ${totalMTasks} entregas
-                        </span>
-                    </div>
-                `;
-                meetingCard.appendChild(header);
-
-                const taskList = document.createElement('div');
-                taskList.className = "divide-y divide-slate-100";
-
-                meeting.tasks.forEach((task) => {
-                    if (currentFilterAssignee && task.assignee.trim().toLowerCase() !== currentFilterAssignee) return;
-
-                    const taskRow = document.createElement('div');
-                    
-                    let statusClass = "border-transparent";
-                    let bgClass = "hover:bg-slate-50";
-                    let selectBg = "bg-slate-100 text-slate-600 border-slate-200";
-                    
-                    if (task.status === 'completed_on_time') {
-                        statusClass = "border-green-500 task-completed"; bgClass = "bg-green-50/50"; selectBg = "bg-green-100 text-green-700 border-green-200";
-                    } else if (task.status === 'completed_late') {
-                        statusClass = "border-teal-500 task-completed-late"; bgClass = "bg-teal-50/50"; selectBg = "bg-teal-100 text-teal-700 border-teal-200";
-                    } else if (task.status === 'delayed') {
-                        statusClass = "border-red-500 task-delayed"; bgClass = "bg-red-50/50 hover:bg-red-50"; selectBg = "bg-red-100 text-red-700 border-red-200";
-                    } else if (task.status === 'rescheduled') {
-                        statusClass = "border-orange-500 task-rescheduled"; bgClass = "bg-orange-50/50 hover:bg-orange-50"; selectBg = "bg-orange-100 text-orange-700 border-orange-200";
-                    }
-
-                    taskRow.className = `task-row p-4 flex flex-col items-start gap-3 border-l-4 ${statusClass} ${bgClass}`;
-                    const isTaskDone = task.status.includes('completed');
-
-                    // Check for AI Report
-                    const aiReportHtml = task.aiReport ? `
-                        <div class="mt-2 w-full bg-indigo-50/50 border border-indigo-100 rounded p-3 text-xs">
-                            <strong class="text-indigo-800 flex items-center gap-1 mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg> Resumo Auditoria IA:</strong>
-                            <div class="ai-content text-slate-600">${task.aiReport}</div>
-                        </div>
-                    ` : '';
-
-                    taskRow.innerHTML = `
-                        <div class="w-full flex justify-between items-start gap-4">
-                            <div class="flex-1">
-                                <div class="flex flex-wrap items-center gap-2 mb-2">
-                                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded border border-blue-200">${task.date}</span>
-                                    <span class="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded uppercase tracking-wide">Ref: ${task.code}</span>
-                                    
-                                    <select onchange="window.updateTaskStatus('${meeting.id}', '${task.id}', this.value)" class="text-xs font-bold px-2 py-1 rounded border outline-none cursor-pointer ${selectBg}">
-                                        <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>⏱ Pendente</option>
-                                        <option value="completed_on_time" ${task.status === 'completed_on_time' ? 'selected' : ''}>✅ Entregue no prazo</option>
-                                        <option value="completed_late" ${task.status === 'completed_late' ? 'selected' : ''}>☑️ Entregue c/ atraso</option>
-                                        <option value="delayed" ${task.status === 'delayed' ? 'selected' : ''}>🚨 Atrasado</option>
-                                        <option value="rescheduled" ${task.status === 'rescheduled' ? 'selected' : ''}>📅 Reprogramado</option>
-                                    </select>
-                                    
-                                    ${task.status === 'rescheduled' ? `
-                                        <div class="flex items-center gap-1 bg-white border border-orange-200 rounded px-2 py-0.5 shadow-sm">
-                                            <span class="text-[10px] uppercase text-orange-600 font-bold">Para:</span>
-                                            <input type="date" value="${task.newDate}" onchange="window.updateTaskNewDate('${meeting.id}', '${task.id}', this.value)" class="text-xs font-medium outline-none bg-transparent text-slate-700">
-                                        </div>
-                                    ` : ''}
-
-                                    <!-- Botão de IA da Tarefa (Apenas Admin para não poluir uso normal) -->
-                                    <button onclick="window.openAiTaskModal('${task.id}', '${meeting.id}', '${task.desc}', '${task.code}')" class="admin-element text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 px-2 py-1 rounded flex items-center gap-1 transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                                        Auditar (IA)
-                                    </button>
-                                </div>
-                                
-                                <p class="text-sm font-medium mb-3 ${isTaskDone ? 'text-slate-400 line-through' : 'text-slate-800'}">${task.desc}</p>
-                                
-                                <div class="flex items-center gap-2 bg-white/80 p-1.5 rounded border border-slate-200 inline-flex shadow-sm">
-                                    <svg class="w-3.5 h-3.5 text-slate-400 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                    <input type="text" placeholder="Atribuir responsável..." value="${task.assignee}" onblur="window.updateTaskAssignee('${meeting.id}', '${task.id}', this.value)" class="text-xs bg-transparent border-none outline-none w-48 text-slate-700">
-                                </div>
-                                ${aiReportHtml}
-                            </div>
-                            <div class="admin-element pt-1">
-                                <button onclick="window.editTask('${meeting.id}', '${task.id}')" class="text-slate-300 hover:text-blue-500"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
-                            </div>
-                        </div>
-                    `;
-                    taskList.appendChild(taskRow);
-                });
-
-                meetingCard.appendChild(taskList);
-
-                const footerBtn = document.createElement('div');
-                footerBtn.className = "bg-slate-50 border-t border-slate-100 p-3 text-center admin-element w-full";
-                footerBtn.innerHTML = `<button onclick="window.openTaskModal('${meeting.id}')" class="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors">+ Adicionar Passo</button>`;
-                meetingCard.appendChild(footerBtn);
-
-                container.appendChild(meetingCard);
-            });
-
-            updateProgress();
-        }
-
-        // ---------------------------------------------------------
-        // AÇÕES (STATUS, ATRIBUIÇÕES) E LOGS AUTOMÁTICOS
-        // ---------------------------------------------------------
-        window.updateTaskStatus = (meetingId, taskId, newStatus) => {
-            let m = state.find(x => x.id === meetingId);
-            let t = m.tasks.find(x => x.id === taskId);
-            
-            if(newStatus === 'delayed' && t.status !== 'delayed') addLog(`🚨 Atraso registrado em: ${t.code}`);
-            if(newStatus.includes('completed') && !t.status.includes('completed')) addLog(`✅ Entrega validada: ${t.code}`);
-            
-            t.status = newStatus;
-            if(isDbConnected) window.forceSync(); else renderMeetings();
-        };
-
-        window.updateTaskAssignee = (meetingId, taskId, val) => {
-            let m = state.find(x => x.id === meetingId);
-            let t = m.tasks.find(x => x.id === taskId);
-            if(t.assignee !== val) {
-                t.assignee = val;
-                if(val.trim() !== '') addLog(`👤 ${val} assumiu a entrega ${t.code}`);
-                if(isDbConnected) window.forceSync(); else renderMeetings();
-            }
-        };
-
-        window.updateTaskNewDate = (meetingId, taskId, val) => {
-            let m = state.find(x => x.id === meetingId);
-            let t = m.tasks.find(x => x.id === taskId);
-            if(t.newDate !== val) {
-                t.newDate = val;
-                addLog(`📅 ${t.code} remarcado para ${val}`);
-                if(isDbConnected) window.forceSync(); else renderMeetings();
-            }
-        };
-
-        // ---------------------------------------------------------
-        // MODO ORQUESTRADOR (ADMIN) E MODAIS DE EDIÇÃO
-        // ---------------------------------------------------------
-        window.requestAdminAccess = () => {
-            if(isAdmin) {
-                isAdmin = false;
-                document.body.classList.remove('admin-mode-active');
-                document.getElementById('admin-status-text').innerText = "Orquestrador";
-                document.getElementById('btn-admin-login').classList.remove('bg-green-600', 'hover:bg-green-700');
-            } else {
-                document.getElementById('admin-password-input').value = '';
-                document.getElementById('auth-error').classList.add('hidden');
-                document.getElementById('modal-auth').classList.remove('hidden');
-            }
-        };
-
-        window.closeAuthModal = () => document.getElementById('modal-auth').classList.add('hidden');
-
-        window.verifyAdmin = () => {
-            if(document.getElementById('admin-password-input').value === 'glicia2026') {
-                isAdmin = true;
-                document.body.classList.add('admin-mode-active');
-                document.getElementById('admin-status-text').innerText = "Modo Edição Ativo";
-                document.getElementById('btn-admin-login').classList.add('bg-green-600', 'hover:bg-green-700');
-                window.closeAuthModal();
-            } else {
-                document.getElementById('auth-error').classList.remove('hidden');
-            }
-        };
-
-        // --- Modais de Reunião ---
-        window.openMeetingModal = (meetingId = null) => {
-            currentEditingMeetingId = meetingId;
-            if(meetingId) {
-                let m = state.find(x => x.id === meetingId);
-                document.getElementById('modal-meeting-title').innerText = "Editar Reunião";
-                document.getElementById('meeting-input-date').value = m.date;
-                document.getElementById('meeting-input-scope').value = m.scope;
-                document.getElementById('btn-delete-meeting').classList.remove('hidden');
-            } else {
-                document.getElementById('modal-meeting-title').innerText = "Nova Reunião / Ciclo";
-                document.getElementById('meeting-input-date').value = '';
-                document.getElementById('meeting-input-scope').value = '';
-                document.getElementById('btn-delete-meeting').classList.add('hidden');
-            }
-            document.getElementById('modal-meeting').classList.remove('hidden');
-        };
-        window.closeMeetingModal = () => document.getElementById('modal-meeting').classList.add('hidden');
-        
-        window.saveMeetingData = () => {
-            let d = document.getElementById('meeting-input-date').value;
-            let s = document.getElementById('meeting-input-scope').value;
-            if(!d) return alert("A data/título é obrigatória.");
-
-            if(currentEditingMeetingId) {
-                let m = state.find(x => x.id === currentEditingMeetingId);
-                m.date = d; m.scope = s;
-            } else {
-                state.push({ id: 'rev-' + Date.now(), date: d, scope: s, tasks: [] });
-            }
-            if(isDbConnected) window.forceSync(); else renderMeetings();
-            window.closeMeetingModal();
-        };
-
-        window.confirmDeleteMeeting = () => {
-            if(confirm("Tem certeza que deseja excluir esta reunião e todas as suas tarefas?")) {
-                state = state.filter(x => x.id !== currentEditingMeetingId);
-                if(isDbConnected) window.forceSync(); else renderMeetings();
-                window.closeMeetingModal();
-            }
-        };
-
-        // --- Modais de Tarefa ---
-        window.openTaskModal = (meetingId) => {
-            currentEditingMeetingId = meetingId;
-            currentEditingTaskId = null;
-            document.getElementById('modal-task-title').innerText = "Adicionar Tarefa";
-            document.getElementById('task-input-date').value = '';
-            document.getElementById('task-input-code').value = '';
-            document.getElementById('task-input-desc').value = '';
-            document.getElementById('btn-delete-task').classList.add('hidden');
-            document.getElementById('modal-task').classList.remove('hidden');
-        };
-
-        window.editTask = (meetingId, taskId) => {
-            currentEditingMeetingId = meetingId;
-            currentEditingTaskId = taskId;
-            let m = state.find(x => x.id === meetingId);
-            let t = m.tasks.find(x => x.id === taskId);
-            
-            document.getElementById('modal-task-title').innerText = "Editar Tarefa";
-            document.getElementById('task-input-date').value = t.date;
-            document.getElementById('task-input-code').value = t.code;
-            document.getElementById('task-input-desc').value = t.desc;
-            document.getElementById('btn-delete-task').classList.remove('hidden');
-            document.getElementById('modal-task').classList.remove('hidden');
-        };
-
-        window.closeTaskModal = () => document.getElementById('modal-task').classList.add('hidden');
-
-        window.saveTaskData = () => {
-            let d = document.getElementById('task-input-date').value;
-            let c = document.getElementById('task-input-code').value;
-            let desc = document.getElementById('task-input-desc').value;
-            if(!desc) return alert("A descrição é obrigatória.");
-
-            let m = state.find(x => x.id === currentEditingMeetingId);
-            if(currentEditingTaskId) {
-                let t = m.tasks.find(x => x.id === currentEditingTaskId);
-                t.date = d; t.code = c; t.desc = desc;
-            } else {
-                m.tasks.push({ id: 't-' + Date.now(), date: d, code: c, desc: desc, status: 'pending', assignee: '', newDate: '' });
-            }
-            if(isDbConnected) window.forceSync(); else renderMeetings();
-            window.closeTaskModal();
-        };
-
-        window.confirmDeleteTask = () => {
-            if(confirm("Excluir esta tarefa?")) {
-                let m = state.find(x => x.id === currentEditingMeetingId);
-                m.tasks = m.tasks.filter(x => x.id !== currentEditingTaskId);
-                if(isDbConnected) window.forceSync(); else renderMeetings();
-                window.closeTaskModal();
-            }
-        };
-
-        // ---------------------------------------------------------
-        // LÓGICA DE NEGÓCIO DO BI E PROGRESSO
-        // ---------------------------------------------------------
-        function updateProgress() {
-            let total = 0, completed = 0, delayed = 0, rescheduled = 0, pending = 0;
-
-            state.forEach(meeting => {
-                meeting.tasks.forEach(task => {
-                    total++;
-                    if(task.status.includes('completed')) completed++;
-                    else if(task.status === 'delayed') delayed++;
-                    else if(task.status === 'rescheduled') rescheduled++;
-                    else pending++;
-                });
-            });
-
-            document.getElementById('count-completed').innerText = completed;
-            document.getElementById('count-delayed').innerText = delayed;
-            document.getElementById('count-rescheduled').innerText = rescheduled;
-            document.getElementById('count-pending').innerText = pending;
-            document.getElementById('total-tasks-bi').innerText = total;
-
-            const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
-            document.getElementById('circle-progress').setAttribute('stroke-dasharray', `${percentage}, 100`);
-            document.getElementById('progress-text-bi').innerText = `${percentage}%`;
-            
-            if(percentage === 100 && total > 0) {
-                document.getElementById('circle-progress').classList.replace('text-blue-500', 'text-green-500');
-            } else {
-                document.getElementById('circle-progress').classList.replace('text-green-500', 'text-blue-500');
-            }
-
-            renderAssigneeStats();
-        }
-
-        window.toggleAssigneeFilter = (assigneeKey) => {
-            currentFilterAssignee = currentFilterAssignee === assigneeKey ? null : assigneeKey;
-            const clearBtn = document.getElementById('clear-filter-btn');
-            currentFilterAssignee ? clearBtn.classList.remove('hidden') : clearBtn.classList.add('hidden');
-            renderMeetings();
-        };
-
-        function renderAssigneeStats() {
-            const container = document.getElementById('assignee-stats-list');
-            container.innerHTML = '';
-            
-            const stats = {};
-            state.forEach(meeting => {
-                meeting.tasks.forEach(task => {
-                    let assignee = task.assignee.trim();
-                    if (assignee) {
-                        let key = assignee.toLowerCase();
-                        if (!stats[key]) stats[key] = { name: assignee, key: key, total: 0, completed: 0, delayed: 0 };
-                        stats[key].total++;
-                        if (task.status.includes('completed')) stats[key].completed++;
-                        if (task.status === 'delayed') stats[key].delayed++;
-                    }
-                });
-            });
-
-            const statsArray = Object.values(stats).sort((a, b) => b.total - a.total);
-
-            if(statsArray.length === 0) {
-                container.innerHTML = '<p class="text-[11px] text-slate-400 italic bg-slate-50 p-2 rounded border border-slate-100">Atribua tarefas para ativar as métricas.</p>';
-                return;
-            }
-
-            statsArray.forEach(stat => {
-                const percent = stat.total === 0 ? 0 : Math.round((stat.completed / stat.total) * 100);
-                const isSelected = currentFilterAssignee === stat.key;
-                
-                const div = document.createElement('div');
-                div.className = `p-2.5 rounded border cursor-pointer transition-all ${isSelected ? 'bg-blue-50 border-blue-300 shadow-sm transform scale-[1.02]' : 'bg-white border-slate-200 hover:border-blue-300'}`;
-                div.onclick = () => window.toggleAssigneeFilter(stat.key);
-                
-                div.innerHTML = `
-                    <div class="flex justify-between items-center mb-1.5">
-                        <span class="text-xs font-bold ${isSelected ? 'text-blue-800' : 'text-slate-700'}">${stat.name}</span>
-                        <span class="text-[10px] font-black ${percent === 100 ? 'text-green-600' : 'text-slate-600'}">${percent}%</span>
-                    </div>
-                    <div class="w-full bg-slate-100 rounded-full h-1 mb-1.5 overflow-hidden">
-                        <div class="bg-${percent === 100 ? 'green' : 'blue'}-500 h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
-                    </div>
-                    <div class="flex justify-between text-[9px] text-slate-500 uppercase tracking-wide font-bold">
-                        <span>${stat.completed}/${stat.total}</span>
-                        ${stat.delayed > 0 ? `<span class="text-red-500">${stat.delayed} atrasos</span>` : ''}
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        window.onload = () => {
-            initCloudSync(); 
-        };
+        window.onload = renderDashboard;
     </script>
 </body>
 </html>
