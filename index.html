@@ -312,10 +312,8 @@
             appId: "1:421525034998:web:3144f96888ea4be39fd9d7"
         };
 
-        // A MÁGICA ACONTECE AQUI:
-        // No ambiente em que estamos, não precisamos de NENHUMA chave!
-        // Deixando vazio, o próprio sistema injeta a autorização automaticamente.
-        const GEMINI_API_KEY = ""; 
+        // CHAVE DA API DO GEMINI (Segura pois tem restrição de domínio no Google Cloud)
+        const GEMINI_API_KEY = "AQ.Ab8RN6K8vRVUCKiSO_sbqgCjEunJmqlBx0tP8fWuh0hTinWVgQ"; 
 
         const appId = 'glicia-auditoria'; 
         let db, auth;
@@ -405,8 +403,8 @@
         }
 
         async function callGemini(userQuery, systemPrompt) {
-            // Usando o modelo integrado que funciona sem chave neste ambiente
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`;
+            // Voltando para o modelo 1.5-flash público e passando a chave que você gerou
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             
             try {
                 const response = await fetch(apiUrl, {
@@ -414,7 +412,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { temperature: 0.3 }
                     })
                 });
                 
