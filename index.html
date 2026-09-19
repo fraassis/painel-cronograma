@@ -115,7 +115,7 @@
                 <div class="mb-8">
                     <button onclick="window.openSwotModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-md">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                        Gerar Análise SWOT (IA)
+                        Gerar Análise Estratégica (IA)
                     </button>
                 </div>
 
@@ -190,7 +190,8 @@
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full transform transition-all">
             <h3 class="text-lg font-bold text-slate-800 mb-2">Acesso Restrito</h3>
             <p class="text-slate-500 text-xs mb-4">Insira a senha do orquestrador para adicionar ou editar a estrutura do cronograma.</p>
-            <input type="password" id="admin-password-input" placeholder="Senha Mestra" class="w-full border border-slate-300 rounded-lg px-3 py-2 mb-4 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <input type="password" id="admin-password-input" placeholder="Senha Mestra (glicia2026)" class="w-full border border-slate-300 rounded-lg px-3 py-2 mb-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            
             <div id="auth-error" class="hidden text-red-500 text-xs font-bold mb-4">Senha incorreta.</div>
             <div class="flex justify-end gap-2">
                 <button onclick="window.closeAuthModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
@@ -245,14 +246,18 @@
                     <textarea id="meeting-input-scope" rows="2" placeholder="Prestação de contas das entregas de..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 resize-none"></textarea>
                 </div>
             </div>
-            <div class="flex justify-end items-center mt-6 pt-4 border-t border-slate-100 gap-2">
-                <button onclick="window.closeMeetingModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
-                <button onclick="window.saveMeetingData()" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm">Salvar Reunião</button>
+            <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100 gap-2">
+                <button id="btn-delete-meeting" onclick="window.confirmDeleteMeeting()" class="hidden px-3 py-2 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-1">Excluir Ciclo</button>
+                <div class="flex gap-2 ml-auto">
+                    <button onclick="window.closeMeetingModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
+                    <button onclick="window.saveMeetingData()" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm">Salvar Reunião</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- MODAIS DE INTELIGÊNCIA ARTIFICIAL -->
+    
     <!-- Modal Análise SWOT (IA) -->
     <div id="modal-swot" class="hidden fixed inset-0 bg-slate-900/80 z-[120] flex items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl w-full flex flex-col max-h-[90vh]">
@@ -280,12 +285,12 @@
             
             <div class="mb-4">
                 <p class="text-xs text-slate-500 mb-2"><strong>Tarefa Exigida:</strong> <span id="ai-task-desc-display"></span></p>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Cole aqui o conteúdo bruto do Relatório ou Notas da Entrega:</label>
-                <textarea id="ai-task-input" rows="5" class="w-full border border-slate-300 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none" placeholder="A IA lerá este conteúdo, validará se faz sentido com a tarefa exigida, e criará um resumo executivo padronizado para salvar no banco de dados."></textarea>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Cole aqui o conteúdo bruto do Relatório, Ata ou Notas da Entrega para validação:</label>
+                <textarea id="ai-task-input" rows="5" class="w-full border border-slate-300 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none" placeholder="A IA lerá este conteúdo, validará se comprova a entrega exigida, e criará um resumo padronizado."></textarea>
             </div>
             
             <div id="ai-task-result-container" class="hidden mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-                <h4 class="text-xs font-bold text-indigo-800 mb-2 uppercase tracking-wide">Resumo Padronizado Sugerido pela IA</h4>
+                <h4 class="text-xs font-bold text-indigo-800 mb-2 uppercase tracking-wide">Avaliação da Inteligência Artificial</h4>
                 <div id="ai-task-result" class="ai-content text-sm text-slate-700"></div>
             </div>
 
@@ -294,7 +299,7 @@
                     Analisar Conteúdo
                 </button>
                 <button onclick="window.saveAiTaskAudit()" id="btn-save-ai" class="hidden px-4 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-colors">
-                    Aprovar e Anexar
+                    Aprovar e Anexar Resumo
                 </button>
             </div>
         </div>
@@ -304,13 +309,12 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // =========================================================================
         // CONFIGURAÇÕES (BANCO DE DADOS E INTELIGÊNCIA ARTIFICIAL)
         // =========================================================================
         
-        // Sua Chave do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyD-YEtxZkGOA4tuleo2zkRxBLOFXWYJ2ko",
             authDomain: "cronogramaotimaaudit.firebaseapp.com",
@@ -320,8 +324,12 @@
             appId: "1:421525034998:web:3144f96888ea4be39fd9d7"
         };
 
-        // Sua Chave do Google Gemini (Pegue de graça em: https://aistudio.google.com/app/apikey)
-        // Sem essa chave, os botões de IA darão um aviso na tela.
+        // CHAVE DA INTELIGÊNCIA ARTIFICIAL (Embutida no código)
+        // DICA DE SEGURANÇA: Vá no Google Cloud Console > APIs e Serviços > Credenciais.
+        // Procure essa chave da API do Gemini lá e adicione a "Restrição de Aplicativo" (Sites HTTP).
+        // Digite: https://fraassis.github.io/*
+        // Dessa forma, mesmo que a chave esteja aqui no código, nenhum hacker poderá roubá-la
+        // para usar em outro site, pois o Google bloqueará pedidos que não venham do seu site!
         const GEMINI_API_KEY = "SUA_CHAVE_GEMINI_AQUI"; 
 
         const appId = 'glicia-auditoria'; 
@@ -352,8 +360,8 @@
         // MOTOR DE INTELIGÊNCIA ARTIFICIAL (GEMINI API)
         // ---------------------------------------------------------
         async function callGemini(userQuery, systemPrompt) {
-            if(GEMINI_API_KEY === "SUA_CHAVE_GEMINI_AQUI" || !GEMINI_API_KEY) {
-                return "⚠️ **Erro de Configuração:** A chave da API do Gemini não foi configurada no código. Adicione sua chave na variável `GEMINI_API_KEY` para ativar a Inteligência Artificial.";
+            if(!GEMINI_API_KEY || GEMINI_API_KEY === "SUA_CHAVE_GEMINI_AQUI") {
+                return "⚠️ **Aviso de Configuração:** A chave da API do Gemini não foi configurada no código. Edite o arquivo index.html e insira sua chave na variável GEMINI_API_KEY para habilitar os recursos de inteligência artificial.";
             }
 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -364,7 +372,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { temperature: 0.3 } // Mais focado e menos criativo para auditoria
                     })
                 });
                 
@@ -374,7 +383,7 @@
                 
                 if(result.candidates && result.candidates[0].content) {
                     let text = result.candidates[0].content.parts[0].text;
-                    // Conversão simples de Markdown para HTML
+                    // Formatação Visual Básica (Markdown para HTML simples)
                     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                     text = text.replace(/## (.*?)\n/g, '<h3>$1</h3>');
                     text = text.replace(/\* (.*?)\n/g, '<li>$1</li>');
@@ -385,11 +394,10 @@
                 return "Não foi possível gerar a análise. A IA não retornou um conteúdo válido.";
             } catch(e) {
                 console.error(e);
-                return "🚨 **Erro de Conexão:** Falha ao se comunicar com o servidor da Inteligência Artificial do Google.";
+                return "🚨 **Erro de Conexão:** Falha ao se comunicar com o servidor da Inteligência Artificial do Google. Verifique se a chave é válida ou se há restrições bloqueando o site.";
             }
         }
 
-        // Modais de IA Expostos
         let currentAiTaskId = null;
         let currentAiReportDraft = null;
 
@@ -407,28 +415,28 @@
 
         window.generateAiTaskAudit = async () => {
             const rawContent = document.getElementById('ai-task-input').value.trim();
-            if(!rawContent) { alert("Cole o conteúdo bruto ou resumo da entrega primeiro."); return; }
+            if(!rawContent) { alert("Cole o conteúdo bruto, ata ou resumo da entrega primeiro."); return; }
 
             const btn = document.getElementById('btn-generate-ai');
-            btn.innerHTML = '⏱ Analisando (Pode levar alguns segundos)...';
+            btn.innerHTML = '⏱ Processando Documento (Pode levar alguns segundos)...';
             btn.disabled = true;
 
-            const systemPrompt = `Você é um Guardião e Auditor de Qualidade (QA) de projetos. Sua função é analisar o texto bruto colado pelo usuário e verificar se ele comprova a execução da Tarefa Exigida.
-Regras:
-1. Se o texto for lixo, não tiver nexo ou for insuficiente para comprovar a tarefa, responda INICIANDO A FRASE COM: "ERRO: O conteúdo fornecido não atende à entrega exigida."
-2. Se fizer sentido, ignore a bagunça do usuário, extraia as informações chave e crie um Resumo Executivo em no máximo 3 bullet points limpos, diretos e formais demonstrando a entrega.`;
+            const systemPrompt = `Você é um Consultor Sênior e Guardião de Auditoria de Projetos. Sua função é analisar o texto bruto colado pelo usuário e verificar rigorosamente se ele comprova a execução da Tarefa Exigida no escopo da empresa.
+Regras Restritas:
+1. Se o texto for vago, irrelevante, ou não comprovar o que a tarefa pede, responda INICIANDO A FRASE EXATAMENTE COM: "ERRO: O conteúdo fornecido não atende ou não comprova a entrega exigida." e explique o porquê em uma linha.
+2. Se fizer sentido e for coerente com a tarefa, ignore problemas de digitação do usuário, extraia as informações essenciais e crie um Resumo Executivo em no máximo 3 bullet points limpos, diretos e formais para compor o log de auditoria.`;
             
             const taskDesc = document.getElementById('ai-task-desc-display').innerText;
-            const aiResponse = await callGemini(`Tarefa Exigida: ${taskDesc}\n\nConteúdo Fornecido pelo funcionário:\n"${rawContent}"`, systemPrompt);
+            const aiResponse = await callGemini(`Tarefa Exigida na Auditoria: ${taskDesc}\n\nConteúdo Fornecido pelo Responsável:\n"${rawContent}"`, systemPrompt);
             
             currentAiReportDraft = aiResponse;
             document.getElementById('ai-task-result').innerHTML = aiResponse;
             document.getElementById('ai-task-result-container').classList.remove('hidden');
             
             if(aiResponse.includes("ERRO:")) {
-                document.getElementById('btn-save-ai').classList.add('hidden');
+                document.getElementById('btn-save-ai').classList.add('hidden'); // Impede salvar
             } else {
-                document.getElementById('btn-save-ai').classList.remove('hidden');
+                document.getElementById('btn-save-ai').classList.remove('hidden'); // Libera aprovação
             }
 
             btn.innerHTML = 'Refazer Análise';
@@ -437,14 +445,13 @@ Regras:
 
         window.saveAiTaskAudit = async () => {
             if(currentAiTaskId && currentAiReportDraft) {
-                // Encontrar tarefa no state e atualizar
                 let meeting = state.find(m => m.id === currentAiTaskId.meeting);
                 if(meeting) {
                     let task = meeting.tasks.find(t => t.id === currentAiTaskId.task);
                     if(task) {
                         task.aiReport = currentAiReportDraft;
                         task.status = "completed_on_time"; // Auto-aprova
-                        window.showToast("Análise da IA salva e tarefa aprovada com sucesso!");
+                        window.showToast("Auditoria validada pela IA e salva no escopo com sucesso!");
                         if(isDbConnected) {
                             await window.forceSync();
                         } else {
@@ -459,28 +466,28 @@ Regras:
         window.openSwotModal = async () => {
             document.getElementById('modal-swot').classList.remove('hidden');
             const contentDiv = document.getElementById('swot-content');
-            contentDiv.innerHTML = `<div class="flex flex-col items-center justify-center h-40 text-slate-400"><svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>A IA está vasculhando o banco de dados e processando a análise...</div>`;
+            contentDiv.innerHTML = `<div class="flex flex-col items-center justify-center h-40 text-slate-400"><svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>O motor de IA está cruzando os dados do banco e gerando o relatório...</div>`;
             
-            let projData = `Resumo do Projeto Atual:\n`;
+            let projData = `Resumo do Projeto Atual (Auditoria):\n`;
             state.forEach(m => { 
                 m.tasks.forEach(t => { 
-                    projData += `- [Status: ${t.status}] ${t.desc} (Resp: ${t.assignee || 'Sem dono'})\n`; 
+                    projData += `- [Status: ${t.status}] ${t.desc} (Responsável: ${t.assignee || 'Não definido'})\n`; 
                 }); 
             });
 
-            const sys = `Você é um Consultor Estratégico de BI (C-Level). Gere uma Matriz SWOT tática do projeto fornecido. Cruze informações de tarefas atrasadas, falta de responsáveis e gargalos.
-Seja direto e executivo.
+            const sys = `Você é um Consultor Estratégico de Business Intelligence (BI). Gere uma Matriz SWOT analítica do projeto fornecido com base exclusiva no status das entregas. Cruze informações de tarefas atrasadas, falta de responsáveis, gargalos e sucessos.
+Seja direto, profissional e focado em negócios.
 Formato exato de saída obrigatório:
-## Forças
+## Forças (Pontos Fortes)
 * ...
-## Fraquezas
+## Fraquezas (Gargalos)
 * ...
 ## Oportunidades
 * ...
-## Ameaças
+## Ameaças (Riscos)
 * ...
-## Recomendação Executiva
-(um parágrafo de fechamento)`;
+## Parecer Executivo
+(um parágrafo conciso de recomendação para a Diretoria)`;
 
             contentDiv.innerHTML = await callGemini(projData, sys);
         };
@@ -509,7 +516,7 @@ Formato exato de saída obrigatório:
             }
         }
 
-        // Função utilitária de conversão de data (DD/MM para comparador YYYYMMDD)
+        // Função utilitária de conversão de data (DD/MM para comparador)
         function parseDateToSort(dateStr) {
             const parts = dateStr.split('/');
             if(parts.length === 2) {
@@ -554,7 +561,7 @@ Formato exato de saída obrigatório:
                 window.showToast("Alterações salvas na nuvem com sucesso!");
             } catch(e) {
                 console.error("Erro ao salvar:", e);
-                window.showToast("Erro de permissão no Firebase. As alterações NÃO foram salvas na nuvem.", "error");
+                window.showToast("Erro de permissão no Firebase. As alterações NÃO foram salvas.", "error");
             }
         };
 
@@ -726,8 +733,8 @@ Formato exato de saída obrigatório:
                                         </div>
                                     ` : ''}
 
-                                    <!-- Botão de IA da Tarefa -->
-                                    <button onclick="window.openAiTaskModal('${task.id}', '${meeting.id}', '${task.desc}', '${task.code}')" class="text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 px-2 py-1 rounded flex items-center gap-1 transition-colors">
+                                    <!-- Botão de IA da Tarefa (Apenas Admin para não poluir uso normal) -->
+                                    <button onclick="window.openAiTaskModal('${task.id}', '${meeting.id}', '${task.desc}', '${task.code}')" class="admin-element text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100 px-2 py-1 rounded flex items-center gap-1 transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                                         Auditar (IA)
                                     </button>
@@ -834,10 +841,12 @@ Formato exato de saída obrigatório:
                 document.getElementById('modal-meeting-title').innerText = "Editar Reunião";
                 document.getElementById('meeting-input-date').value = m.date;
                 document.getElementById('meeting-input-scope').value = m.scope;
+                document.getElementById('btn-delete-meeting').classList.remove('hidden');
             } else {
                 document.getElementById('modal-meeting-title').innerText = "Nova Reunião / Ciclo";
                 document.getElementById('meeting-input-date').value = '';
                 document.getElementById('meeting-input-scope').value = '';
+                document.getElementById('btn-delete-meeting').classList.add('hidden');
             }
             document.getElementById('modal-meeting').classList.remove('hidden');
         };
@@ -858,10 +867,11 @@ Formato exato de saída obrigatório:
             window.closeMeetingModal();
         };
 
-        window.deleteMeeting = (meetingId) => {
+        window.confirmDeleteMeeting = () => {
             if(confirm("Tem certeza que deseja excluir esta reunião e todas as suas tarefas?")) {
-                state = state.filter(x => x.id !== meetingId);
+                state = state.filter(x => x.id !== currentEditingMeetingId);
                 if(isDbConnected) window.forceSync(); else renderMeetings();
+                window.closeMeetingModal();
             }
         };
 
