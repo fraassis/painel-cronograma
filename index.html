@@ -410,588 +410,175 @@
                 renderMeetings();
                 finishLoading();
             }
-        }
+        };
 
-        function listenToUpdates() {
-            // Utilizamos um único documento central para armazenar toda a estrutura do cronograma.
-            // Isso permite adicionar, remover e reordenar facilmente.
-            const scheduleRef = doc(db, 'artifacts', appId, 'public', 'data', 'schedule', 'main');
+        /* ========================================================================== */
+        /* ESTRUTURA VISUAL E LÓGICA DA INTELIGÊNCIA ARTIFICIAL (GEMINI)              */
+        /* ========================================================================== */
+        
+        // Injetar HTML dos Modais da IA no body
+        document.body.insertAdjacentHTML('beforeend', `
+            <!-- Modal Análise SWOT (IA) -->
+            <div id="modal-swot" class="hidden fixed inset-0 bg-slate-900/80 z-[120] flex items-center justify-center backdrop-blur-sm p-4">
+                <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl w-full flex flex-col max-h-[90vh]">
+                    <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-100">
+                        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <svg class="text-indigo-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                            Análise Estratégica SWOT (IA)
+                        </h3>
+                        <button onclick="window.closeSwotModal()" class="text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    </div>
+                    <div id="swot-content" class="flex-1 overflow-y-auto ai-content text-sm text-slate-700 pr-2"></div>
+                </div>
+            </div>
+
+            <!-- Modal IA Auditoria de Tarefa -->
+            <div id="modal-ai-task" class="hidden fixed inset-0 bg-slate-900/80 z-[120] flex items-center justify-center backdrop-blur-sm p-4">
+                <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-xl w-full flex flex-col max-h-[90vh]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <svg class="text-indigo-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                            Guardião de Auditoria (IA)
+                        </h3>
+                        <button onclick="window.closeAiTaskModal()" class="text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="text-xs text-slate-500 mb-2"><strong>Tarefa Exigida:</strong> <span id="ai-task-desc-display"></span></p>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Cole aqui o conteúdo bruto do Relatório ou Notas da Entrega:</label>
+                        <textarea id="ai-task-input" rows="5" class="w-full border border-slate-300 rounded-lg p-3 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none" placeholder="A IA lerá este conteúdo, validará se faz sentido com a tarefa exigida, e criará um resumo executivo padronizado para salvar no banco de dados."></textarea>
+                    </div>
+                    
+                    <div id="ai-task-result-container" class="hidden mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                        <h4 class="text-xs font-bold text-indigo-800 mb-2 uppercase tracking-wide">Resumo Padronizado Sugerido pela IA</h4>
+                        <div id="ai-task-result" class="ai-content text-sm text-slate-700"></div>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
+                        <button onclick="window.generateAiTaskAudit()" id="btn-generate-ai" class="px-4 py-2 rounded-lg text-sm font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors flex items-center gap-2">
+                            Analisar Conteúdo
+                        </button>
+                        <button onclick="window.saveAiTaskAudit()" id="btn-save-ai" class="hidden px-4 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-colors">
+                            Aprovar e Anexar ao Cronograma
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        // Função Base de Chamada da API Gemini
+        async function callGemini(userQuery, systemPrompt) {
+            const apiKey = ""; // A plataforma resolve automaticamente em runtime
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
             
-            onSnapshot(scheduleRef, (docSnap) => {
-                if (docSnap.exists() && docSnap.data().meetings) {
-                    state = docSnap.data().meetings;
-                    auditLogs = docSnap.data().logs || [];
-                } else {
-                    // Se não existir, popula com a base padrão
-                    state = [...defaultInitialData];
-                    auditLogs = [];
-                    saveStateToCloud();
-                }
-                sortState();
-                renderMeetings();
-                finishLoading();
-            }, (error) => {
-                console.error("Erro ao escutar banco: ", error);
-                finishLoading();
-            });
-        }
-
-        // Função para converter data "DD/MM" em número para ordenação
-        function getComparableDate(dateStr) {
-            if (!dateStr) return 9999;
-            const match = dateStr.match(/(\d{2})\/(\d{2})/);
-            if (match) return parseInt(match[2]) * 100 + parseInt(match[1]); // MM * 100 + DD
-            return 9999;
-        }
-
-        // Função para ordenar cronologicamente reuniões e tarefas
-        function sortState() {
-            state.sort((a, b) => getComparableDate(a.date) - getComparableDate(b.date));
-            state.forEach(m => {
-                if(m.tasks) m.tasks.sort((a, b) => getComparableDate(a.date) - getComparableDate(b.date));
-            });
-        }
-
-        async function saveStateToCloud() {
-            if (!isDbConnected) {
-                showToast("Modo offline: Banco desconectado.", "error");
-                return;
-            }
-            
-            const btnSync = document.getElementById('btn-sync');
-            if(btnSync) btnSync.innerHTML = '⏳ Salvando...';
-            
-            const scheduleRef = doc(db, 'artifacts', appId, 'public', 'data', 'schedule', 'main');
             try {
-                await setDoc(scheduleRef, { meetings: state, logs: auditLogs });
-                
-                if(btnSync) {
-                    btnSync.innerHTML = '✅ Nuvem Atualizada';
-                    setTimeout(() => { btnSync.innerHTML = '☁️ Sincronizar'; }, 3000);
-                }
-                showToast("Dados salvos com sucesso!", "success");
-            } catch (error) {
-                console.error("Erro ao salvar: ", error);
-                if(btnSync) btnSync.innerHTML = '⚠️ Erro ao Sincronizar';
-                showToast("Erro de permissão no Firebase. As alterações NÃO foram salvas na nuvem.", "error");
-            }
-        }
-        
-        window.forceSync = () => {
-            saveStateToCloud();
-        };
-
-        function finishLoading() {
-            const overlay = document.getElementById('loading-overlay');
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 300);
-        }
-
-        function renderMeetings() {
-            const container = document.getElementById('meetings-container');
-            container.innerHTML = '';
-            
-            // Adiciona classe ao body se for admin para mostrar botões ocultos
-            if(isAdmin) document.body.classList.add('admin-mode-active');
-            else document.body.classList.remove('admin-mode-active');
-
-            if(state.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-slate-400">Nenhum ciclo cadastrado. ${isAdmin ? 'Clique em "Novo Ciclo" para começar.' : ''}</div>`;
-                updateProgress();
-                return;
-            }
-
-            state.forEach((meeting) => {
-                const visibleTasks = meeting.tasks.filter(t => !currentFilterAssignee || t.assignee.trim().toLowerCase() === currentFilterAssignee);
-                
-                // Se estiver filtrando e não tiver tarefa nessa reunião, oculta a reunião inteira
-                if (currentFilterAssignee && visibleTasks.length === 0) return; 
-
-                const totalMTasks = visibleTasks.length;
-                const completedMTasks = visibleTasks.filter(t => t.status === 'completed_on_time' || t.status === 'completed_late').length;
-                const isMeetingComplete = totalMTasks === completedMTasks && totalMTasks > 0;
-
-                const meetingCard = document.createElement('div');
-                meetingCard.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6";
-                
-                const header = document.createElement('div');
-                header.className = `p-5 border-b border-slate-100 flex justify-between items-center transition-colors ${isMeetingComplete ? 'bg-green-50' : 'bg-slate-50'}`;
-                
-                // Botões administrativos do cabeçalho (Editar Reunião)
-                const adminMeetingControls = `
-                    <div class="admin-element flex gap-2 ml-4">
-                        <button onclick="window.openMeetingModal('${meeting.id}')" class="text-slate-400 hover:text-blue-600 p-1 transition-colors" title="Editar Ciclo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
-                        <button onclick="window.deleteMeeting('${meeting.id}')" class="text-slate-400 hover:text-red-600 p-1 transition-colors" title="Excluir Ciclo"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
-                    </div>
-                `;
-
-                header.innerHTML = `
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-lg font-bold text-slate-800">Reunião: ${meeting.date}</h3>
-                            ${isMeetingComplete ? '<span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Auditado</span>' : ''}
-                            ${adminMeetingControls}
-                        </div>
-                        <p class="text-sm text-slate-500 mt-1">Pauta: ${meeting.scope}</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-sm font-medium ${isMeetingComplete ? 'text-green-600' : 'text-slate-500'}">
-                            ${completedMTasks} / ${totalMTasks} entregas
-                        </span>
-                    </div>
-                `;
-                meetingCard.appendChild(header);
-
-                const taskList = document.createElement('div');
-                taskList.className = "divide-y divide-slate-100";
-
-                meeting.tasks.forEach((task) => {
-                    if (currentFilterAssignee && task.assignee.trim().toLowerCase() !== currentFilterAssignee) return;
-
-                    const taskRow = document.createElement('div');
-                    
-                    let statusClass = "border-transparent";
-                    let bgClass = "hover:bg-slate-50";
-                    let selectBg = "bg-slate-100 text-slate-600 border-slate-200";
-                    
-                    if (task.status === 'completed_on_time') {
-                        statusClass = "border-green-500 task-completed";
-                        bgClass = "bg-green-50/50";
-                        selectBg = "bg-green-100 text-green-700 border-green-200";
-                    } else if (task.status === 'completed_late') {
-                        statusClass = "border-teal-500 task-completed-late";
-                        bgClass = "bg-teal-50/50 hover:bg-teal-50";
-                        selectBg = "bg-teal-100 text-teal-700 border-teal-200";
-                    } else if (task.status === 'delayed') {
-                        statusClass = "border-red-500 task-delayed";
-                        bgClass = "bg-red-50/50 hover:bg-red-50";
-                        selectBg = "bg-red-100 text-red-700 border-red-200";
-                    } else if (task.status === 'rescheduled') {
-                        statusClass = "border-orange-500 task-rescheduled";
-                        bgClass = "bg-orange-50/50 hover:bg-orange-50";
-                        selectBg = "bg-orange-100 text-orange-700 border-orange-200";
-                    }
-
-                    taskRow.className = `task-row p-4 flex flex-col sm:flex-row items-start gap-4 border-l-4 ${statusClass} ${bgClass} group`;
-                    
-                    const isTaskDone = (task.status === 'completed_on_time' || task.status === 'completed_late');
-
-                    // Botão de editar tarefa (Admin)
-                    const adminTaskControls = `
-                        <button onclick="window.openTaskModal('${meeting.id}', '${task.id}')" class="admin-element absolute right-4 top-4 text-slate-300 hover:text-blue-600 transition-colors bg-white rounded-full p-1.5 shadow-sm border border-slate-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
-                    `;
-
-                    taskRow.innerHTML = `
-                        <div class="flex-1 w-full relative pr-8">
-                            ${adminTaskControls}
-                            <div class="flex flex-wrap items-center gap-2 mb-2">
-                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-200" title="Data Prevista">${task.date}</span>
-                                <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded" title="Referência">Ref: ${task.code}</span>
-                                
-                                <select onchange="window.updateTaskStatus('${meeting.id}', '${task.id}', this.value)" class="text-xs font-bold px-2 py-1 rounded border outline-none cursor-pointer transition-colors ${selectBg}">
-                                    <option value="pending" ${(!task.status || task.status === 'pending') ? 'selected' : ''}>⏱ Pendente</option>
-                                    <option value="completed_on_time" ${task.status === 'completed_on_time' ? 'selected' : ''}>✅ Entregue no prazo</option>
-                                    <option value="completed_late" ${task.status === 'completed_late' ? 'selected' : ''}>☑️ Entregue c/ atraso</option>
-                                    <option value="delayed" ${task.status === 'delayed' ? 'selected' : ''}>🚨 Atrasado</option>
-                                    <option value="rescheduled" ${task.status === 'rescheduled' ? 'selected' : ''}>📅 Reprogramado</option>
-                                </select>
-                                
-                                ${task.status === 'rescheduled' ? `
-                                    <div class="flex items-center gap-1 bg-white border border-orange-200 rounded px-2 py-0.5 shadow-sm">
-                                        <span class="text-xs text-orange-600 font-medium">Nova data:</span>
-                                        <input type="text" placeholder="DD/MM" value="${task.newDate || ''}" onchange="window.updateTaskNewDate('${meeting.id}', '${task.id}', this.value)" class="text-xs outline-none bg-transparent text-slate-700 w-16">
-                                    </div>
-                                ` : ''}
-                            </div>
-                            
-                            <p class="text-sm font-medium mb-3 pr-4 ${isTaskDone ? 'text-slate-400 line-through' : 'text-slate-800'}">${task.desc}</p>
-                            
-                            <div class="flex items-center gap-2 bg-white/80 p-2 rounded-md border border-slate-200 inline-flex shadow-sm">
-                                <svg class="w-4 h-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                <input type="text" placeholder="Atribuir responsável..." value="${task.assignee || ''}" onblur="window.updateTaskAssignee('${meeting.id}', '${task.id}', this.value)" onkeyup="if(event.key === 'Enter') this.blur()" class="text-sm bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none w-48 sm:w-56 py-0.5 placeholder-slate-400 text-slate-700 transition-colors">
-                            </div>
-                        </div>
-                    `;
-                    taskList.appendChild(taskRow);
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
                 });
-
-                // Botão de adicionar tarefa (Admin)
-                const addTaskBtn = document.createElement('div');
-                addTaskBtn.className = "admin-element w-full p-3 bg-slate-50 border-t border-slate-100 flex justify-center";
-                addTaskBtn.innerHTML = `
-                    <button onclick="window.openTaskModal('${meeting.id}', null)" class="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 py-1 px-3 rounded-full hover:bg-blue-50 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Adicionar Passo
-                    </button>
-                `;
+                const result = await response.json();
                 
-                meetingCard.appendChild(taskList);
-                meetingCard.appendChild(addTaskBtn);
-                container.appendChild(meetingCard);
-            });
-
-            updateProgress();
-            renderCalendarAndLogs();
-        }
-
-        // Renderiza Calendário Dinâmico e Histórico
-        function renderCalendarAndLogs() {
-            const calContainer = document.getElementById('calendar-container');
-            if(!calContainer) return;
-            
-            // Agrupar tarefas por Data
-            const tasksByDate = {};
-            state.forEach(m => m.tasks.forEach(t => {
-                const activeDate = t.newDate || t.date;
-                const match = activeDate.match(/(\d{2})\/(\d{2})/);
-                if(match) {
-                    const key = `${match[1]}/${match[2]}`;
-                    if(!tasksByDate[key]) tasksByDate[key] = [];
-                    tasksByDate[key].push(t.status);
+                if(result.candidates && result.candidates[0].content) {
+                    let text = result.candidates[0].content.parts[0].text;
+                    // Conversão simples de Markdown para HTML
+                    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    text = text.replace(/## (.*?)\n/g, '<h3>$1</h3>');
+                    text = text.replace(/\* (.*?)\n/g, '<li>$1</li>');
+                    text = text.replace(/<li>/g, '<ul class="list-disc pl-4"><li>').replace(/<\/li>\n(?!<li>)/g, '</li></ul>');
+                    text = text.replace(/\n/g, '<br>');
+                    return text;
                 }
-            }));
-
-            // Meses do Projeto (Setembro a Dezembro 2026)
-            const months = [
-                { num: 9, name: "Setembro", days: 30 },
-                { num: 10, name: "Outubro", days: 31 },
-                { num: 11, name: "Novembro", days: 30 },
-                { num: 12, name: "Dezembro", days: 31 }
-            ];
-
-            let calHTML = '';
-            months.forEach(mo => {
-                calHTML += `<div class="mb-4"><h3 class="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wide">${mo.name}</h3><div class="grid grid-cols-7 gap-1">`;
-                for(let d=1; d<=mo.days; d++) {
-                    const dayStr = d.toString().padStart(2, '0');
-                    const moStr = mo.num.toString().padStart(2, '0');
-                    const key = `${dayStr}/${moStr}`;
-                    const tList = tasksByDate[key];
-                    
-                    let bgClass = "bg-slate-50 text-slate-300 border border-slate-100";
-                    if(tList) {
-                        bgClass = "bg-blue-50 text-blue-600 font-bold border border-blue-200 cursor-pointer shadow-sm";
-                        if(tList.includes('delayed')) bgClass = "bg-red-50 text-red-600 font-bold border-red-300 shadow-sm";
-                        else if(tList.includes('rescheduled')) bgClass = "bg-orange-50 text-orange-600 font-bold border-orange-300 shadow-sm";
-                        else if(tList.every(s => s === 'completed_on_time' || s === 'completed_late')) bgClass = "bg-green-50 text-green-600 font-bold border-green-300 shadow-sm";
-                    }
-                    calHTML += `<div class="aspect-square flex items-center justify-center text-[9px] rounded ${bgClass}" title="Data: ${key}">${d}</div>`;
-                }
-                calHTML += `</div></div>`;
-            });
-            calContainer.innerHTML = calHTML;
-
-            // Histórico (Logs)
-            const logsContainer = document.getElementById('logs-container');
-            if(auditLogs.length === 0) {
-                logsContainer.innerHTML = '<p class="text-[10px] text-slate-400 italic bg-slate-50 p-3 rounded border border-slate-100">Nenhum evento reprogramado registrado.</p>';
-            } else {
-                logsContainer.innerHTML = auditLogs.map(l => `
-                    <div class="text-[10px] border-l-2 border-slate-300 pl-2 py-1 mb-2 flex justify-between items-start group">
-                        <div class="flex-1 pr-2">
-                            <span class="text-slate-400 font-bold block mb-0.5">${l.date}</span>
-                            <span class="text-slate-600">${l.msg}</span>
-                        </div>
-                        <button onclick="window.deleteLog(${l.id})" class="admin-element text-slate-300 hover:text-red-500 transition-colors p-1" title="Excluir Log">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-                `).join('');
-            }
-        }
-        
-        window.deleteLog = (logId) => {
-            auditLogs = auditLogs.filter(l => l.id !== logId);
-            saveStateToCloud();
-            if(!isDbConnected) renderCalendarAndLogs();
-        };
-
-        window.updateTaskStatus = (meetingId, taskId, newStatus) => {
-            updateTaskField(meetingId, taskId, 'status', newStatus);
-        };
-
-        window.updateTaskAssignee = (meetingId, taskId, assigneeName) => {
-            updateTaskField(meetingId, taskId, 'assignee', assigneeName);
-        };
-
-        window.updateTaskNewDate = (meetingId, taskId, dateVal) => {
-            const meeting = state.find(m => m.id === meetingId);
-            if(meeting) {
-                const task = meeting.tasks.find(t => t.id === taskId);
-                if(task) {
-                    if(dateVal && dateVal !== task.newDate) {
-                        const today = new Date();
-                        const logDate = today.getDate().toString().padStart(2, '0') + '/' + (today.getMonth()+1).toString().padStart(2, '0');
-                        auditLogs.unshift({
-                            id: Date.now(),
-                            date: logDate,
-                            msg: `Ref [${task.code}]: reagendada de ${task.date} para ${dateVal}`
-                        });
-                        if(auditLogs.length > 25) auditLogs.pop(); // Limite histórico
-                    }
-                    task.newDate = dateVal;
-                    sortState();
-                    saveStateToCloud();
-                    if(!isDbConnected) renderMeetings();
-                }
-            }
-        };
-        
-        function updateTaskField(meetingId, taskId, field, value) {
-            const meeting = state.find(m => m.id === meetingId);
-            if(meeting) {
-                const task = meeting.tasks.find(t => t.id === taskId);
-                if(task) {
-                    task[field] = value;
-                    saveStateToCloud();
-                    // O render será acionado pelo onSnapshot. Caso não haja conexão, forçamos o render:
-                    if(!isDbConnected) renderMeetings();
-                }
+                return "Não foi possível gerar a análise.";
+            } catch(e) {
+                console.error(e);
+                return "Erro de conexão com o servidor IA.";
             }
         }
 
-        function updateProgress() {
-            let total = 0, completed = 0, delayed = 0, rescheduled = 0, pending = 0;
+        // Lógica do Modal Guardião
+        let currentAiTaskId = null;
+        let currentAiReportDraft = null;
 
-            state.forEach(meeting => {
-                meeting.tasks.forEach(task => {
-                    total++;
-                    if(task.status === 'completed_on_time' || task.status === 'completed_late') completed++;
-                    else if(task.status === 'delayed') delayed++;
-                    else if(task.status === 'rescheduled') rescheduled++;
-                    else pending++;
-                });
-            });
+        window.openAiTaskModal = (taskId, desc, code) => {
+            currentAiTaskId = taskId;
+            document.getElementById('ai-task-desc-display').innerText = `[${code}] ${desc}`;
+            document.getElementById('ai-task-input').value = '';
+            document.getElementById('ai-task-result-container').classList.add('hidden');
+            document.getElementById('btn-save-ai').classList.add('hidden');
+            document.getElementById('btn-generate-ai').innerHTML = 'Analisar Conteúdo';
+            document.getElementById('modal-ai-task').classList.remove('hidden');
+        };
 
-            document.getElementById('count-completed').innerText = completed;
-            document.getElementById('count-delayed').innerText = delayed;
-            document.getElementById('count-rescheduled').innerText = rescheduled;
-            document.getElementById('count-pending').innerText = pending;
-            document.getElementById('total-tasks-bi').innerText = total;
+        window.closeAiTaskModal = () => document.getElementById('modal-ai-task').classList.add('hidden');
 
-            const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
-            document.getElementById('circle-progress').setAttribute('stroke-dasharray', `${percentage}, 100`);
-            document.getElementById('progress-text-bi').innerText = `${percentage}%`;
+        window.generateAiTaskAudit = async () => {
+            const rawContent = document.getElementById('ai-task-input').value.trim();
+            if(!rawContent) { alert("Cole o conteúdo bruto do relatório primeiro."); return; }
+
+            const btn = document.getElementById('btn-generate-ai');
+            btn.innerHTML = '⏱ Analisando...';
+            btn.disabled = true;
+
+            const systemPrompt = `Você é um Guardião e Auditor de Qualidade (QA) de projetos.
+Sua função é analisar o texto bruto colado pelo usuário e verificar se ele comprova a execução da Tarefa Exigida.
+Regra 1: Se o texto for lixo, irrelevante ou não tiver nada a ver com a tarefa, responda APENAS: "ERRO: O conteúdo fornecido não atende à entrega exigida."
+Regra 2: Se fizer sentido, ignore o formato bagunçado do usuário, extraia as informações chave e crie um Resumo Executivo em no máximo 3 bullet points limpos e diretos demonstrando a entrega.`;
             
-            if(percentage === 100 && total > 0) {
-                document.getElementById('circle-progress').classList.replace('text-blue-500', 'text-green-500');
-            } else {
-                document.getElementById('circle-progress').classList.replace('text-green-500', 'text-blue-500');
-            }
-
-            renderAssigneeStats();
-        }
-
-        window.toggleAssigneeFilter = (assigneeKey) => {
-            currentFilterAssignee = currentFilterAssignee === assigneeKey ? null : assigneeKey;
-            document.getElementById('clear-filter-btn').classList.toggle('hidden', !currentFilterAssignee);
-            renderMeetings();
-        };
-
-        function renderAssigneeStats() {
-            const container = document.getElementById('assignee-stats-list');
-            container.innerHTML = '';
+            const taskDesc = document.getElementById('ai-task-desc-display').innerText;
+            const aiResponse = await callGemini(`Tarefa Exigida: ${taskDesc}\n\nConteúdo Fornecido:\n"${rawContent}"`, systemPrompt);
             
-            const stats = {};
-            state.forEach(meeting => {
-                meeting.tasks.forEach(task => {
-                    let assignee = (task.assignee || '').trim();
-                    if (assignee) {
-                        let key = assignee.toLowerCase();
-                        if (!stats[key]) stats[key] = { name: assignee, key: key, total: 0, completed: 0, delayed: 0 };
-                        stats[key].total++;
-                        if (task.status === 'completed_on_time' || task.status === 'completed_late') stats[key].completed++;
-                        if (task.status === 'delayed') stats[key].delayed++;
-                    }
-                });
-            });
-
-            const statsArray = Object.values(stats).sort((a, b) => b.total - a.total);
-
-            if(statsArray.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-lg border border-slate-100">Atribua tarefas para ativar a análise de equipe.</p>';
-                return;
-            }
-
-            statsArray.forEach(stat => {
-                const percent = stat.total === 0 ? 0 : Math.round((stat.completed / stat.total) * 100);
-                const isSelected = currentFilterAssignee === stat.key;
-                
-                const div = document.createElement('div');
-                div.className = `p-3 rounded-lg border cursor-pointer transition-all ${isSelected ? 'bg-blue-50 border-blue-300 shadow-sm' : 'bg-white border-slate-200 hover:border-blue-400'}`;
-                div.onclick = () => window.toggleAssigneeFilter(stat.key);
-                
-                div.innerHTML = `
-                    <div class="flex justify-between items-center mb-1.5">
-                        <span class="text-sm font-bold ${isSelected ? 'text-blue-800' : 'text-slate-700'}">${stat.name}</span>
-                        <span class="text-xs font-black ${percent === 100 ? 'text-green-600' : 'text-slate-600'}">${percent}%</span>
-                    </div>
-                    <div class="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
-                        <div class="bg-${percent === 100 ? 'green' : 'blue'}-500 h-full rounded-full" style="width: ${percent}%"></div>
-                    </div>
-                    <div class="flex justify-between text-[10px] text-slate-500 font-medium">
-                        <span>${stat.completed}/${stat.total} entregas</span>
-                        ${stat.delayed > 0 ? `<span class="text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded">${stat.delayed} atraso(s)</span>` : ''}
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        window.requestAdminAccess = () => {
-            if(isAdmin) {
-                // Fazer logout admin
-                isAdmin = false;
-                document.getElementById('admin-status-text').innerText = "Orquestrador";
-                document.getElementById('btn-admin-login').classList.replace('bg-green-700', 'bg-slate-800');
-                renderMeetings();
-            } else {
-                document.getElementById('admin-password-input').value = '';
-                document.getElementById('auth-error').classList.add('hidden');
-                document.getElementById('modal-auth').classList.remove('hidden');
-            }
-        };
-
-        window.closeAuthModal = () => document.getElementById('modal-auth').classList.add('hidden');
-
-        window.verifyAdmin = () => {
-            const pass = document.getElementById('admin-password-input').value;
-            if(pass === "glicia2026") {
-                isAdmin = true;
-                window.closeAuthModal();
-                document.getElementById('admin-status-text').innerText = "Modo Edição Ativo";
-                document.getElementById('btn-admin-login').classList.replace('bg-slate-800', 'bg-green-700');
-                renderMeetings();
-                showToast("Modo Orquestrador ativado.", "success");
-            } else {
-                document.getElementById('auth-error').classList.remove('hidden');
-            }
-        };
-
-        // Lógica: Reuniões (Adicionar/Editar/Excluir)
-        window.openMeetingModal = (meetingId = null) => {
-            currentEditingMeetingId = meetingId;
-            const titleEl = document.getElementById('modal-meeting-title');
+            currentAiReportDraft = aiResponse;
+            document.getElementById('ai-task-result').innerHTML = aiResponse;
+            document.getElementById('ai-task-result-container').classList.remove('hidden');
             
-            if(meetingId) {
-                const meeting = state.find(m => m.id === meetingId);
-                titleEl.innerText = "Editar Reunião";
-                document.getElementById('meeting-input-date').value = meeting.date;
-                document.getElementById('meeting-input-scope').value = meeting.scope;
-            } else {
-                titleEl.innerText = "Nova Reunião / Ciclo";
-                document.getElementById('meeting-input-date').value = "";
-                document.getElementById('meeting-input-scope').value = "";
+            if(aiResponse.includes("ERRO:")) document.getElementById('btn-save-ai').classList.add('hidden');
+            else document.getElementById('btn-save-ai').classList.remove('hidden');
+
+            btn.innerHTML = 'Refazer Análise';
+            btn.disabled = false;
+        };
+
+        window.saveAiTaskAudit = () => {
+            if(currentAiTaskId && currentAiReportDraft) {
+                if(isDbConnected) updateTaskInDb(currentAiTaskId, { aiReport: currentAiReportDraft });
+                else updateLocalTask(currentAiTaskId, { aiReport: currentAiReportDraft });
+                window.closeAiTaskModal();
             }
-            document.getElementById('modal-meeting').classList.remove('hidden');
         };
 
-        window.closeMeetingModal = () => document.getElementById('modal-meeting').classList.add('hidden');
-
-        window.saveMeetingData = () => {
-            const date = document.getElementById('meeting-input-date').value.trim();
-            const scope = document.getElementById('meeting-input-scope').value.trim();
+        // Lógica da Análise SWOT
+        window.openSwotModal = async () => {
+            document.getElementById('modal-swot').classList.remove('hidden');
+            const contentDiv = document.getElementById('swot-content');
+            contentDiv.innerHTML = `<div class="flex flex-col items-center justify-center h-40 text-slate-400"><svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>A IA está vasculhando o banco de dados e processando a análise...</div>`;
             
-            if(!date) return;
+            let projData = `Resumo do Projeto:\n`;
+            state.forEach(m => { m.tasks.forEach(t => { projData += `- [Status: ${t.status}] ${t.desc} (Resp: ${t.assignee || 'Sem dono'})\n`; }); });
 
-            if(currentEditingMeetingId) {
-                const meeting = state.find(m => m.id === currentEditingMeetingId);
-                meeting.date = date;
-                meeting.scope = scope;
-            } else {
-                state.push({
-                    id: "rev-" + Date.now(),
-                    date: date,
-                    scope: scope,
-                    tasks: []
-                });
-            }
-            
-            sortState();
-            saveStateToCloud();
-            if(!isDbConnected) renderMeetings();
-            window.closeMeetingModal();
+            const sys = `Você é um Consultor Estratégico (C-Level). Gere uma Matriz SWOT tática do projeto fornecido.
+Cruze informações de tarefas atrasadas, falta de responsáveis e gargalos sistêmicos.
+Formato exato de saída:
+## Forças
+* ...
+## Fraquezas
+* ...
+## Oportunidades
+* ...
+## Ameaças
+* ...
+## Recomendação Executiva
+(um parágrafo de fechamento)`;
+
+            contentDiv.innerHTML = await callGemini(projData, sys);
         };
 
-        window.deleteMeeting = (meetingId) => {
-            // Em vez de prompt/confirm complexo, remove direto ou oculta para admin ter ctz (ideal ter um confirm, mas evitamos o nativo por restrição. Vamos apagar direto p/ simplificar a UX admin).
-            state = state.filter(m => m.id !== meetingId);
-            saveStateToCloud();
-            if(!isDbConnected) renderMeetings();
-        };
+        window.closeSwotModal = () => document.getElementById('modal-swot').classList.add('hidden');
 
-        // Lógica: Tarefas (Adicionar/Editar/Excluir)
-        window.openTaskModal = (meetingId, taskId = null) => {
-            currentEditingMeetingId = meetingId;
-            currentEditingTaskId = taskId;
-            
-            const titleEl = document.getElementById('modal-task-title');
-            const delBtn = document.getElementById('btn-delete-task');
-
-            if(taskId) {
-                titleEl.innerText = "Editar Tarefa";
-                delBtn.classList.remove('hidden');
-                
-                const meeting = state.find(m => m.id === meetingId);
-                const task = meeting.tasks.find(t => t.id === taskId);
-                
-                document.getElementById('task-input-date').value = task.date;
-                document.getElementById('task-input-code').value = task.code;
-                document.getElementById('task-input-desc').value = task.desc;
-            } else {
-                titleEl.innerText = "Nova Tarefa";
-                delBtn.classList.add('hidden');
-                document.getElementById('task-input-date').value = "";
-                document.getElementById('task-input-code').value = "";
-                document.getElementById('task-input-desc').value = "";
-            }
-            document.getElementById('modal-task').classList.remove('hidden');
-        };
-
-        window.closeTaskModal = () => document.getElementById('modal-task').classList.add('hidden');
-
-        window.saveTaskData = () => {
-            const date = document.getElementById('task-input-date').value.trim();
-            const code = document.getElementById('task-input-code').value.trim();
-            const desc = document.getElementById('task-input-desc').value.trim();
-            
-            if(!desc) return; // Descrição é obrigatória
-
-            const meeting = state.find(m => m.id === currentEditingMeetingId);
-
-            if(currentEditingTaskId) {
-                const task = meeting.tasks.find(t => t.id === currentEditingTaskId);
-                task.date = date;
-                task.code = code;
-                task.desc = desc;
-            } else {
-                meeting.tasks.push({
-                    id: "t" + Date.now(),
-                    date: date,
-                    code: code,
-                    desc: desc,
-                    status: "pending",
-                    assignee: "",
-                    newDate: ""
-                });
-            }
-
-            sortState();
-            saveStateToCloud();
-            if(!isDbConnected) renderMeetings();
-            window.closeTaskModal();
-        };
-
-        window.confirmDeleteTask = () => {
-            const meeting = state.find(m => m.id === currentEditingMeetingId);
-            meeting.tasks = meeting.tasks.filter(t => t.id !== currentEditingTaskId);
-            saveStateToCloud();
-            if(!isDbConnected) renderMeetings();
-            window.closeTaskModal();
-        };
-
+        // Inicializar aplicação
         window.onload = () => {
             initCloudSync(); 
         };
