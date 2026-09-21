@@ -312,73 +312,73 @@
             appId: "1:421525034998:web:3144f96888ea4be39fd9d7"
         };
 
-        // CHAVE DA API DO GEMINI (Segura pois tem restrição de domínio no Google Cloud)
-        const GEMINI_API_KEY = "AQ.Ab8RN6K8vRVUCKiSO_sbqgCjEunJmqlBx0tP8fWuh0hTinWVgQ"; 
-
-        const appId = 'glicia-auditoria'; 
-        let db, auth;
-        let isDbConnected = false;
-
-        // ESTADO INICIAL RECONSTRUÍDO (Cronograma Validado: 14/09 a 14/12)
+        // ESTADO INICIAL RECONSTRUÍDO (Cronograma Validado: 14/09 a 21/12)
         const defaultState = [
             { id: 'm1', date: '14/09', scope: 'Entregas até 13/09', tasks: [
-                { id: 't1', date: '12/09', code: '5.1', desc: 'Mobilização e diagnóstico', status: 'pending', assignee: '', newDate: '' }
+                { id: 't0', date: '02/09', code: '1.1', desc: 'Instalação Winthor', status: 'pending', assignee: 'Thiago', newDate: '' },
+                { id: 't1', date: '12/09', code: '5.1', desc: 'Mobilização e diagnóstico', status: 'pending', assignee: 'Bruno', newDate: '' },
+                { id: 't2', date: '14/09', code: '1.2', desc: 'Aquisição IA – Empresarial', status: 'pending', assignee: 'Paulo', newDate: '' },
+                { id: 't3', date: '14/09', code: '2.1', desc: 'Atualizar e implantar política de despesas (Contemplar Fluxo, responsabilidades e tetos de gasto por setor)', status: 'pending', assignee: 'Luiza', newDate: '' },
+                { id: 't4', date: '14/09', code: '4.1', desc: 'Mapear todas as regras atuais de comissões', status: 'pending', assignee: 'Bruno', newDate: '' },
+                { id: 't5', date: '14/09', code: '6.1', desc: 'Criar e implantar uma política de gestão de risco em participação de licitações', status: 'pending', assignee: 'Hilby', newDate: '' }
             ]},
             { id: 'm2', date: '21/09', scope: 'Entregas de 14/09 a 20/09', tasks: [
-                { id: 't2', date: '14/09', code: '1.2', desc: 'Aquisição IA – Empresarial', status: 'pending', assignee: '', newDate: '' },
-                { id: 't3', date: '14/09', code: '2.1', desc: 'Atualizar e implantar política de despesas (Fluxo, responsabilidades e tetos)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't4', date: '14/09', code: '2.2', desc: 'Revisar contas gerenciais', status: 'pending', assignee: '', newDate: '' },
-                { id: 't5', date: '14/09', code: '4.1', desc: 'Mapear todas as regras atuais de comissões', status: 'pending', assignee: '', newDate: '' },
-                { id: 't6', date: '15/09', code: '2.3', desc: 'Reclassificação de despesas por centro de custo', status: 'pending', assignee: '', newDate: '' },
-                { id: 't7', date: '15/09', code: '3.1', desc: 'Homologação da base para testagem de novas tabelas', status: 'pending', assignee: '', newDate: '' },
-                { id: 't8', date: '17/09', code: '3.2', desc: 'Mapear os tipos de vendas existentes hoje e preços praticados', status: 'pending', assignee: '', newDate: '' },
-                { id: 't9', date: '17/09', code: '4.2', desc: 'Cruzar comissão × faturamento × margem × recebimento', status: 'pending', assignee: '', newDate: '' },
-                { id: 't10', date: '17/09', code: '5.6', desc: 'Classificação dos clientes ativos (manual)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't11', date: '17/09', code: '5.7', desc: 'Classificação dos clientes inativos', status: 'pending', assignee: '', newDate: '' },
-                { id: 't12', date: '17/09', code: '7.1', desc: 'Diagnóstico: Levantamento dos últimos 12 meses', status: 'pending', assignee: '', newDate: '' }
+                { id: 't6', date: '15/09', code: '3.1', desc: 'Homologação da base para testagem de novas tabelas', status: 'pending', assignee: 'Thiago', newDate: '' },
+                { id: 't7', date: '17/09', code: '3.2', desc: 'Mapear os tipos de vendas existentes hoje e preços praticados', status: 'pending', assignee: 'Paulo | Luiza', newDate: '' },
+                { id: 't8', date: '17/09', code: '4.2', desc: 'Cruzar comissão x faturamento x margem x recebimento', status: 'pending', assignee: 'Luiza', newDate: '' },
+                { id: 't9', date: '17/09', code: '5.6', desc: 'Classificação dos clientes ativos (manual)', status: 'pending', assignee: 'Hilby', newDate: '' },
+                { id: 't10', date: '17/09', code: '5.7', desc: 'Classificação dos clientes inativos', status: 'pending', assignee: 'Hilby', newDate: '' },
+                { id: 't11', date: '17/09', code: '7.1', desc: 'Diagnóstico: Levantamento dos últimos 12 meses', status: 'pending', assignee: 'Luiza', newDate: '' },
+                { id: 't12', date: '21/09', code: '1.3', desc: 'Montagem DRE Matriz e Filiais & Consolidação', status: 'pending', assignee: 'Paulo | Luiza', newDate: '' },
+                { id: 't13', date: '21/09', code: '3.3', desc: 'Definir os parâmetros oficiais das novas tabelas', status: 'pending', assignee: 'Paulo | Luiza', newDate: '' },
+                { id: 't14', date: '21/09', code: '4.5', desc: 'Replicar política de comissionamento sob resultado (Especialistas)', status: 'pending', assignee: 'Felipi | Virgilia', newDate: '' }
             ]},
             { id: 'm3', date: '28/09', scope: 'Entregas de 21/09 a 27/09', tasks: [
-                { id: 't13', date: '21/09', code: '3.3', desc: 'Definir os parâmetros oficiais das novas tabelas', status: 'pending', assignee: '', newDate: '' },
-                { id: 't14', date: '21/09', code: '4.5', desc: 'Replicar política de comissionamento sob resultado (Especialistas)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't15', date: '23/09', code: '3.4', desc: 'Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't16', date: '23/09', code: '6.2', desc: 'Atualizar e implantar o fluxo do processo licitatório e de gestão de contratos', status: 'pending', assignee: '', newDate: '' },
-                { id: 't17', date: '24/09', code: '3.5', desc: 'Corrigir distorções', status: 'pending', assignee: '', newDate: '' },
-                { id: 't18', date: '25/09', code: '3.6', desc: 'Criar relatórios', status: 'pending', assignee: '', newDate: '' }
+                { id: 't15', date: '23/09', code: '6.2', desc: 'Atualizar e implantar o fluxo do processo licitatório e de gestão de contratos', status: 'pending', assignee: '', newDate: '' },
+                { id: 't16', date: '24/09', code: '7.3', desc: 'Segmentação: Classificar ABC (Giro, Faturamento, Rentabilidade)', status: 'pending', assignee: '', newDate: '' },
+                { id: 't17', date: '25/09', code: '4.3', desc: 'Simular novos modelos de comissionamento', status: 'pending', assignee: '', newDate: '' }
             ]},
             { id: 'm4', date: '05/10', scope: 'Entregas de 28/09 a 04/10', tasks: [
-                { id: 't19', date: '30/09', code: '4.3', desc: 'Simular novos modelos de comissionamento', status: 'pending', assignee: '', newDate: '' },
-                { id: 't20', date: '30/09', code: '10.2', desc: 'Desenvolver Instrução de trabalho dos RCA\'s | Especializada', status: 'pending', assignee: '', newDate: '' },
-                { id: 't21', date: '30/09', code: '10.3', desc: 'Desenvolver Instrução de trabalho das Especializadas', status: 'pending', assignee: '', newDate: '' },
-                { id: 't22', date: '01/10', code: '4.4', desc: 'Definir nova política e comunicação aos envolvidos (RCA)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't23', date: '01/10', code: '7.4', desc: 'Redefinir Estoque Mínimo e Ideal (por Filial)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't24', date: '04/10', code: '5.2', desc: 'Saneamento do banco e mapeamento Winthor', status: 'pending', assignee: '', newDate: '' },
-                { id: 't25', date: '04/10', code: '10.1', desc: 'Garantir cumprimento do pilar 6', status: 'pending', assignee: '', newDate: '' }
+                { id: 't18', date: '30/09', code: '4.4', desc: 'Definir nova política e comunicação aos envolvidos (RCA)', status: 'pending', assignee: '', newDate: '' },
+                { id: 't19', date: '30/09', code: '8.1', desc: 'Medir os principais indicadores para identificar desvios e tomar decisões rápidas - Definir Indicadores', status: 'pending', assignee: '', newDate: '' },
+                { id: 't20', date: '30/09', code: '8.2', desc: 'Aquisição BI Empresarial - Grupo Otima', status: 'pending', assignee: '', newDate: '' },
+                { id: 't21', date: '30/09', code: '10.2', desc: 'Desenvolver Instrução de trabalho dos RCA\'s', status: 'pending', assignee: '', newDate: '' },
+                { id: 't22', date: '01/10', code: '7.4', desc: 'Redefinir Estoque Mínimo e Ideal (por Filial), cobertura por perfil de SKU', status: 'pending', assignee: '', newDate: '' },
+                { id: 't23', date: '04/10', code: '10.1', desc: 'Garantir cumprimento do pilar 6', status: 'pending', assignee: '', newDate: '' }
             ]},
             { id: 'm5', date: '12/10', scope: 'Entregas de 05/10 a 11/10', tasks: [
-                { id: 't26', date: '07/10', code: '5.4', desc: 'BI e homologação', status: 'pending', assignee: '', newDate: '' },
-                { id: 't27', date: '09/10', code: '5.5', desc: 'Plano de ação, ajustes e expansão', status: 'pending', assignee: '', newDate: '' },
-                { id: 't28', date: '10/10', code: '6.1', desc: 'Criar e implantar uma política de gestão de risco em licitações', status: 'pending', assignee: '', newDate: '' },
-                { id: 't29', date: '10/10', code: '7.5', desc: 'Criar Plano de Ação com Comercial e Marketing', status: 'pending', assignee: '', newDate: '' }
+                { id: 't24', date: '07/10', code: '1.4', desc: 'Auditoria do Plano de Contas', status: 'pending', assignee: '', newDate: '' },
+                { id: 't25', date: '07/10', code: '2.2', desc: 'Revisar contas gerenciais', status: 'pending', assignee: '', newDate: '' },
+                { id: 't26', date: '07/10', code: '2.3', desc: 'Reclassificação de despesas por centro de custo', status: 'pending', assignee: '', newDate: '' },
+                { id: 't27', date: '09/10', code: '7.5', desc: 'Criar Plano de Ação com Comercial e Marketing com os produtos parados - imediato após diagnóstico', status: 'pending', assignee: '', newDate: '' },
+                { id: 't28', date: '10/10', code: '5.2', desc: 'Saneamento do banco e mapeamento Winthor', status: 'pending', assignee: '', newDate: '' }
             ]},
             { id: 'm6', date: '19/10', scope: 'Entregas de 12/10 a 18/10', tasks: [
-                { id: 't30', date: '18/10', code: '7.2', desc: 'Saneamento: Validar cadastros, SKU, ABC, Estoque sem giro...', status: 'pending', assignee: '', newDate: '' }
+                { id: 't29', date: '18/10', code: '7.6', desc: 'Criar política de Auditoria em compras (acompanhamento de pedidos, valores, leadtime, estoques, atendimento a pedidos)', status: 'pending', assignee: '', newDate: '' },
+                { id: 't30', date: '19/10', code: '5.3', desc: 'Cruzamento e modelo', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm7', date: '26/10', scope: 'Entregas de 19/10 a 25/10', tasks: [
-                { id: 't31', date: '19/10', code: '5.3', desc: 'Cruzamento e modelo', status: 'pending', assignee: '', newDate: '' },
-                { id: 't32', date: '19/10', code: '7.3', desc: 'Segmentação: Classificar ABC (giro, faturamento, rentabilidade)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't33', date: '19/10', code: '7.6', desc: 'Criar política de Auditoria em compras (pedidos, valores, leadtime)', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm7', date: '26/10', scope: 'Revisão', tasks: [] },
+            { id: 'm8', date: '03/11', scope: 'Entregas do fim de outubro', tasks: [
+                { id: 't31', date: '03/11', code: '7.7', desc: 'Desenvolver indicadores e estruturar dashboard', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm8', date: '09/11', scope: 'Entregas do final de outubro até 08/11', tasks: [
-                { id: 't34', date: '03/11', code: '7.7', desc: 'Desenvolver indicadores e estruturar dashboard', status: 'pending', assignee: '', newDate: '' },
-                { id: 't35', date: '07/11', code: '5.8', desc: 'Desenvolver um BI - Monitoramento', status: 'pending', assignee: '', newDate: '' },
-                { id: 't36', date: '07/11', code: '7.8', desc: 'Governança – reuniões semanais para tratamento', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm9', date: '09/11', scope: 'Entregas de Novembro', tasks: [
+                { id: 't32', date: '07/11', code: '5.4', desc: 'BI e homologação', status: 'pending', assignee: '', newDate: '' },
+                { id: 't33', date: '07/11', code: '5.5', desc: 'Plano de ação, ajustes e expansão', status: 'pending', assignee: '', newDate: '' },
+                { id: 't34', date: '07/11', code: '5.8', desc: 'Desenvolver um BI - Monitoramento', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm9', date: '07/12', scope: 'Entregas de novembro (até 06/12)', tasks: [
-                { id: 't37', date: '30/11', code: '8.1', desc: 'Medir os principais indicadores para identificar desvios', status: 'pending', assignee: '', newDate: '' }
+             { id: 'm10', date: '16/11', scope: 'Revisão', tasks: [] },
+             { id: 'm11', date: '23/11', scope: 'Revisão', tasks: [] },
+            { id: 'm12', date: '30/11', scope: 'Entregas de final de Novembro', tasks: [
+                { id: 't35', date: '30/11', code: '3.4', desc: 'Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)', status: 'pending', assignee: '', newDate: '' },
+                { id: 't36', date: '30/11', code: '3.5', desc: 'Corrigir distorções', status: 'pending', assignee: '', newDate: '' },
+                { id: 't37', date: '30/11', code: '3.6', desc: 'Criar relatórios', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm10', date: '14/12', scope: 'Entregas de 07/12 a 13/12', tasks: [
-                { id: 't38', date: '07/12', code: '8.2', desc: 'Aquisição BI Empresarial – Grupo Ótima', status: 'pending', assignee: '', newDate: '' },
-                { id: 't39', date: '13/12', code: '9.1', desc: 'Garantir que clientes, produtos, canais gerem resultado', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm13', date: '07/12', scope: 'Entregas do início de Dezembro', tasks: [
+                { id: 't38', date: '07/12', code: '9.1', desc: 'Garantir que clientes, produtos, canais e operações gerem resultado sustentável (Acompanhando resultados periodicamente)', status: 'pending', assignee: '', newDate: '' }
+            ]},
+             { id: 'm14', date: '21/12', scope: 'Entregas Finais', tasks: [
+                { id: 't39', date: '19/12', code: '7.2', desc: 'Saneamento: Validar cadastros, SKU ativos/inativos, ABC, Estoque sem giro, Cobertura, Distorções', status: 'pending', assignee: '', newDate: '' },
+                { id: 't40', date: '19/12', code: '7.8', desc: 'Governança - Reuniões semanais para tratamento de indicadores', status: 'pending', assignee: '', newDate: '' }
             ]}
         ];
 
@@ -403,8 +403,8 @@
         }
 
         async function callGemini(userQuery, systemPrompt) {
-            // Voltando para o modelo 1.5-flash público e passando a chave que você gerou
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            // Utilizando o modelo do Canvas (gemini-3-flash-preview) sem API KEY - A autorização ocorre implicitamente no ambiente.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=`;
             
             try {
                 const response = await fetch(apiUrl, {
@@ -436,7 +436,7 @@
                 return "Não foi possível gerar a análise. A IA não retornou um conteúdo válido.";
             } catch(e) {
                 console.error(e);
-                return `🚨 **Erro de Conexão:** Falha ao se comunicar com a IA. Detalhe: ${e.message}`;
+                return `🚨 **Erro de Conexão:** Falha ao se comunicar com a IA (O ambiente não pôde validar a chamada). Detalhe: ${e.message}`;
             }
         }
 
