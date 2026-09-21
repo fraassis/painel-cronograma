@@ -9,16 +9,16 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         
-        /* Custom scrollbar para melhor UX */
+        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Transições suaves */
+        /* Smooth transitions */
         .task-row { transition: all 0.3s ease; }
         
-        /* Cores de Status atualizadas */
+        /* State styling */
         .task-completed { background-color: #f0fdf4 !important; border-left-color: #22c55e !important; }
         .task-completed-late { background-color: #f0fdfa !important; border-left-color: #14b8a6 !important; }
         .task-delayed { background-color: #fef2f2 !important; border-left-color: #ef4444 !important; }
@@ -29,12 +29,12 @@
         .admin-mode-active .admin-element { display: inline-flex; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilo para Conteúdo IA gerado */
+        /* Estilo para Conteúdo IA */
         .ai-content h3 { font-size: 1rem; font-weight: bold; color: #1e293b; margin-top: 1rem; margin-bottom: 0.5rem; }
         .ai-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
         .ai-content p { margin-bottom: 0.5rem; }
 
-        /* Toast Notifications (Popups de aviso) */
+        /* Toast Notifications */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { background: white; border-left: 4px solid #3b82f6; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .toast.show { transform: translateX(0); }
@@ -62,11 +62,10 @@
         </div>
     </header>
 
-    <div class="flex-1 flex flex-col lg:flex-row items-stretch">
+    <div class="flex-1 flex flex-col md:flex-row items-stretch">
         
-        <!-- SIDEBAR ESQUERDA: BI (Resumo de Status e Perfomance) -->
-        <aside class="w-full lg:w-80 xl:w-96 bg-white border-r border-slate-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 z-10 flex flex-col">
-            <div class="p-6 lg:sticky lg:top-[72px]">
+        <aside class="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex-shrink-0 z-10 flex flex-col">
+            <div class="p-6 md:sticky md:top-[72px]">
                 <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
                     Resumo Executivo
@@ -90,7 +89,7 @@
 
                 <div class="grid grid-cols-2 gap-3 mb-8">
                     <div class="bg-green-50 border border-green-100 rounded-xl p-3 flex flex-col">
-                        <span class="text-green-600 text-[10px] font-bold uppercase tracking-wide mb-1">Entregues</span>
+                        <span class="text-green-600 text-[10px] font-bold uppercase tracking-wide mb-1">Validadas</span>
                         <span id="count-completed" class="text-xl font-black text-green-700">0</span>
                     </div>
                     <div class="bg-red-50 border border-red-100 rounded-xl p-3 flex flex-col">
@@ -107,6 +106,7 @@
                     </div>
                 </div>
 
+                <!-- Botão Gerar Matriz SWOT (IA) -->
                 <div class="mb-8">
                     <button onclick="window.openSwotModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl flex justify-center items-center gap-2 transition-colors shadow-md">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
@@ -173,15 +173,16 @@
 
     <div id="loading-overlay" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
         <svg class="animate-spin h-10 w-10 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        <p class="text-slate-600 font-semibold text-sm">Sincronizando banco de dados colaborativo...</p>
+        <p class="text-slate-600 font-semibold text-sm" id="loading-text">Conectando ao banco de dados e sincronizando...</p>
     </div>
 
-    <!-- Modal Orquestrador -->
+    <!-- Modal Orquestrador (Senha) -->
     <div id="modal-auth" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full transform transition-all">
             <h3 class="text-lg font-bold text-slate-800 mb-2">Acesso Restrito</h3>
             <p class="text-slate-500 text-xs mb-4">Insira a senha do orquestrador para adicionar ou editar a estrutura do cronograma.</p>
             <input type="password" id="admin-password-input" placeholder="Senha Mestra" class="w-full border border-slate-300 rounded-lg px-3 py-2 mb-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            
             <div id="auth-error" class="hidden text-red-500 text-xs font-bold mb-4">Senha incorreta.</div>
             <div class="flex justify-end gap-2">
                 <button onclick="window.closeAuthModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
@@ -190,7 +191,7 @@
         </div>
     </div>
 
-    <!-- Modal Tarefa -->
+    <!-- Modal de Tarefa (Adicionar/Editar) -->
     <div id="modal-task" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full transform transition-all">
             <h3 id="modal-task-title" class="text-lg font-bold text-slate-800 mb-4">Adicionar Tarefa</h3>
@@ -222,7 +223,7 @@
         </div>
     </div>
 
-    <!-- Modal Reunião -->
+    <!-- Modal de Reunião (Adicionar/Editar) -->
     <div id="modal-meeting" class="hidden fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center backdrop-blur-sm px-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full transform transition-all">
             <h3 id="modal-meeting-title" class="text-lg font-bold text-slate-800 mb-4">Nova Reunião / Ciclo</h3>
@@ -246,7 +247,6 @@
         </div>
     </div>
 
-    
     <!-- Modal Análise SWOT (IA) -->
     <div id="modal-swot" class="hidden fixed inset-0 bg-slate-900/80 z-[120] flex items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl w-full flex flex-col max-h-[90vh]">
@@ -300,7 +300,7 @@
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // =========================================================================
-        // CONFIGURAÇÕES (BANCO DE DADOS E INTELIGÊNCIA ARTIFICIAL)
+        // CONFIGURAÇÕES
         // =========================================================================
         
         const firebaseConfig = {
@@ -312,77 +312,83 @@
             appId: "1:421525034998:web:3144f96888ea4be39fd9d7"
         };
 
-        // ESTADO INICIAL RECONSTRUÍDO (Cronograma Validado: 14/09 a 21/12)
+        // CHAVE DA API GEMINI FIXADA
+        // Usando o modelo gemini-1.5-flash que aceita chamadas via chave de API e domínios restritos
+        const GEMINI_API_KEY = "AIzaSyD-YEtxZkGOA4tuleo2zkRxBLOFXWYJ2ko"; 
+        const appId = 'glicia-auditoria'; 
+        let db, auth;
+        let isDbConnected = false;
+
+        // DADOS OFICIAIS BASEADOS NO RELATÓRIO EM PDF
         const defaultState = [
-            { id: 'm1', date: '14/09', scope: 'Entregas até 13/09', tasks: [
-                { id: 't0', date: '02/09', code: '1.1', desc: 'Instalação Winthor', status: 'pending', assignee: 'Thiago', newDate: '' },
-                { id: 't1', date: '12/09', code: '5.1', desc: 'Mobilização e diagnóstico', status: 'pending', assignee: 'Bruno', newDate: '' },
-                { id: 't2', date: '14/09', code: '1.2', desc: 'Aquisição IA – Empresarial', status: 'pending', assignee: 'Paulo', newDate: '' },
-                { id: 't3', date: '14/09', code: '2.1', desc: 'Atualizar e implantar política de despesas (Contemplar Fluxo, responsabilidades e tetos de gasto por setor)', status: 'pending', assignee: 'Luiza', newDate: '' },
-                { id: 't4', date: '14/09', code: '4.1', desc: 'Mapear todas as regras atuais de comissões', status: 'pending', assignee: 'Bruno', newDate: '' },
-                { id: 't5', date: '14/09', code: '6.1', desc: 'Criar e implantar uma política de gestão de risco em participação de licitações', status: 'pending', assignee: 'Hilby', newDate: '' }
+            { id: 'm1', date: '14/09', scope: 'Entregas Iniciais', tasks: [
+                { id: 't1', date: '02/09', code: '1.1', desc: 'Instalação Winthor', status: 'pending', assignee: 'Thiago', newDate: '' },
+                { id: 't2', date: '12/09', code: '5.1', desc: 'Mobilização e diagnóstico', status: 'pending', assignee: 'Bruno', newDate: '' },
+                { id: 't3', date: '14/09', code: '1.2', desc: 'Aquisição IA - Empresarial', status: 'pending', assignee: 'Paulo', newDate: '' },
+                { id: 't4', date: '14/09', code: '2.1', desc: 'Atualizar e implantar política de despesas (Contemplar Fluxo, responsabilidades e tetos)', status: 'pending', assignee: 'Luiza', newDate: '' },
+                { id: 't5', date: '14/09', code: '4.1', desc: 'Mapear todas as regras atuais de comissões', status: 'pending', assignee: 'Bruno', newDate: '' },
+                { id: 't6', date: '14/09', code: '6.1', desc: 'Criar e implantar uma política de gestão de risco em participação de licitações', status: 'pending', assignee: 'Hilby', newDate: '' }
             ]},
-            { id: 'm2', date: '21/09', scope: 'Entregas de 14/09 a 20/09', tasks: [
-                { id: 't6', date: '15/09', code: '3.1', desc: 'Homologação da base para testagem de novas tabelas', status: 'pending', assignee: 'Thiago', newDate: '' },
-                { id: 't7', date: '17/09', code: '3.2', desc: 'Mapear os tipos de vendas existentes hoje e preços praticados', status: 'pending', assignee: 'Paulo | Luiza', newDate: '' },
-                { id: 't8', date: '17/09', code: '4.2', desc: 'Cruzar comissão x faturamento x margem x recebimento', status: 'pending', assignee: 'Luiza', newDate: '' },
-                { id: 't9', date: '17/09', code: '5.6', desc: 'Classificação dos clientes ativos (manual)', status: 'pending', assignee: 'Hilby', newDate: '' },
-                { id: 't10', date: '17/09', code: '5.7', desc: 'Classificação dos clientes inativos', status: 'pending', assignee: 'Hilby', newDate: '' },
-                { id: 't11', date: '17/09', code: '7.1', desc: 'Diagnóstico: Levantamento dos últimos 12 meses', status: 'pending', assignee: 'Luiza', newDate: '' },
-                { id: 't12', date: '21/09', code: '1.3', desc: 'Montagem DRE Matriz e Filiais & Consolidação', status: 'pending', assignee: 'Paulo | Luiza', newDate: '' },
-                { id: 't13', date: '21/09', code: '3.3', desc: 'Definir os parâmetros oficiais das novas tabelas', status: 'pending', assignee: 'Paulo | Luiza', newDate: '' },
-                { id: 't14', date: '21/09', code: '4.5', desc: 'Replicar política de comissionamento sob resultado (Especialistas)', status: 'pending', assignee: 'Felipi | Virgilia', newDate: '' }
+            { id: 'm2', date: '21/09', scope: 'Entregas da Semana', tasks: [
+                { id: 't7', date: '15/09', code: '3.1', desc: 'Homologação da base para testagem de novas tabelas', status: 'pending', assignee: 'Thiago', newDate: '' },
+                { id: 't8', date: '17/09', code: '3.2', desc: 'Mapear os tipos de vendas existentes hoje e preços praticados', status: 'pending', assignee: 'Paulo | Luiza', newDate: '' },
+                { id: 't9', date: '17/09', code: '4.2', desc: 'Cruzar comissão x faturamento x margem x recebimento', status: 'pending', assignee: 'Luiza', newDate: '' },
+                { id: 't10', date: '17/09', code: '5.6', desc: 'Classificação dos clientes ativos (manual)', status: 'pending', assignee: 'Hilby', newDate: '' },
+                { id: 't11', date: '17/09', code: '5.7', desc: 'Classificação dos clientes inativos', status: 'pending', assignee: 'Hilby', newDate: '' },
+                { id: 't12', date: '17/09', code: '7.1', desc: 'Diagnóstico: Levantamento dos últimos 12 meses', status: 'pending', assignee: 'Luiza', newDate: '' },
+                { id: 't13', date: '21/09', code: '1.3', desc: 'Montagem DRE Matriz e Filiais & Consolidação', status: 'pending', assignee: 'Paulo | Luiza', newDate: '' },
+                { id: 't14', date: '21/09', code: '3.3', desc: 'Definir os parâmetros oficiais das novas tabelas', status: 'pending', assignee: 'Paulo | Luiza', newDate: '' },
+                { id: 't15', date: '21/09', code: '4.5', desc: 'Replicar política de comissionamento sob resultado (Especialistas)', status: 'pending', assignee: 'Felipi | Virgilia', newDate: '' }
             ]},
-            { id: 'm3', date: '28/09', scope: 'Entregas de 21/09 a 27/09', tasks: [
-                { id: 't15', date: '23/09', code: '6.2', desc: 'Atualizar e implantar o fluxo do processo licitatório e de gestão de contratos', status: 'pending', assignee: '', newDate: '' },
-                { id: 't16', date: '24/09', code: '7.3', desc: 'Segmentação: Classificar ABC (Giro, Faturamento, Rentabilidade)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't17', date: '25/09', code: '4.3', desc: 'Simular novos modelos de comissionamento', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm3', date: '28/09', scope: 'Entregas da Semana', tasks: [
+                { id: 't16', date: '23/09', code: '6.2', desc: 'Atualizar e implantar o fluxo do processo licitatório e de gestão de contratos', status: 'pending', assignee: '', newDate: '' },
+                { id: 't17', date: '24/09', code: '7.3', desc: 'Segmentação: Classificar ABC (Giro, Faturamento, Rentabilidade)', status: 'pending', assignee: '', newDate: '' },
+                { id: 't18', date: '25/09', code: '4.3', desc: 'Simular novos modelos de comissionamento', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm4', date: '05/10', scope: 'Entregas de 28/09 a 04/10', tasks: [
-                { id: 't18', date: '30/09', code: '4.4', desc: 'Definir nova política e comunicação aos envolvidos (RCA)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't19', date: '30/09', code: '8.1', desc: 'Medir os principais indicadores para identificar desvios e tomar decisões rápidas - Definir Indicadores', status: 'pending', assignee: '', newDate: '' },
-                { id: 't20', date: '30/09', code: '8.2', desc: 'Aquisição BI Empresarial - Grupo Otima', status: 'pending', assignee: '', newDate: '' },
-                { id: 't21', date: '30/09', code: '10.2', desc: 'Desenvolver Instrução de trabalho dos RCA\'s', status: 'pending', assignee: '', newDate: '' },
-                { id: 't22', date: '01/10', code: '7.4', desc: 'Redefinir Estoque Mínimo e Ideal (por Filial), cobertura por perfil de SKU', status: 'pending', assignee: '', newDate: '' },
-                { id: 't23', date: '04/10', code: '10.1', desc: 'Garantir cumprimento do pilar 6', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm4', date: '05/10', scope: 'Entregas da Semana', tasks: [
+                { id: 't19', date: '30/09', code: '4.4', desc: 'Definir nova política e comunicação aos envolvidos (RCA)', status: 'pending', assignee: '', newDate: '' },
+                { id: 't20', date: '30/09', code: '8.1', desc: 'Medir os principais indicadores para identificar desvios e tomar decisões rápidas - Definir Indicadores', status: 'pending', assignee: '', newDate: '' },
+                { id: 't21', date: '30/09', code: '8.2', desc: 'Aquisição BI Empresarial - Grupo Otima', status: 'pending', assignee: '', newDate: '' },
+                { id: 't22', date: '30/09', code: '10.2', desc: 'Desenvolver Instrução de trabalho dos RCA\'s', status: 'pending', assignee: '', newDate: '' },
+                { id: 't23', date: '01/10', code: '7.4', desc: 'Redefinir Estoque Mínimo e Ideal (por Filial), cobertura por perfil de SKU', status: 'pending', assignee: '', newDate: '' },
+                { id: 't24', date: '04/10', code: '10.1', desc: 'Garantir cumprimento do pilar 6', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm5', date: '12/10', scope: 'Entregas de 05/10 a 11/10', tasks: [
-                { id: 't24', date: '07/10', code: '1.4', desc: 'Auditoria do Plano de Contas', status: 'pending', assignee: '', newDate: '' },
-                { id: 't25', date: '07/10', code: '2.2', desc: 'Revisar contas gerenciais', status: 'pending', assignee: '', newDate: '' },
-                { id: 't26', date: '07/10', code: '2.3', desc: 'Reclassificação de despesas por centro de custo', status: 'pending', assignee: '', newDate: '' },
-                { id: 't27', date: '09/10', code: '7.5', desc: 'Criar Plano de Ação com Comercial e Marketing com os produtos parados - imediato após diagnóstico', status: 'pending', assignee: '', newDate: '' },
-                { id: 't28', date: '10/10', code: '5.2', desc: 'Saneamento do banco e mapeamento Winthor', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm5', date: '12/10', scope: 'Entregas da Semana', tasks: [
+                { id: 't25', date: '07/10', code: '1.4', desc: 'Auditoria do Plano de Contas', status: 'pending', assignee: '', newDate: '' },
+                { id: 't26', date: '07/10', code: '2.2', desc: 'Revisar contas gerenciais', status: 'pending', assignee: '', newDate: '' },
+                { id: 't27', date: '07/10', code: '2.3', desc: 'Reclassificação de despesas por centro de custo', status: 'pending', assignee: '', newDate: '' },
+                { id: 't28', date: '09/10', code: '7.5', desc: 'Criar Plano de Ação com Comercial e Marketing com os produtos parados - imediato após diagnóstico', status: 'pending', assignee: '', newDate: '' },
+                { id: 't29', date: '10/10', code: '5.2', desc: 'Saneamento do banco e mapeamento Winthor', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm6', date: '19/10', scope: 'Entregas de 12/10 a 18/10', tasks: [
-                { id: 't29', date: '18/10', code: '7.6', desc: 'Criar política de Auditoria em compras (acompanhamento de pedidos, valores, leadtime, estoques, atendimento a pedidos)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't30', date: '19/10', code: '5.3', desc: 'Cruzamento e modelo', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm6', date: '19/10', scope: 'Entregas da Semana', tasks: [
+                { id: 't30', date: '18/10', code: '7.6', desc: 'Criar política de Auditoria em compras (acompanhamento de pedidos, valores, leadtime, estoques)', status: 'pending', assignee: '', newDate: '' },
+                { id: 't31', date: '19/10', code: '5.3', desc: 'Cruzamento e modelo', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm7', date: '26/10', scope: 'Revisão', tasks: [] },
-            { id: 'm8', date: '03/11', scope: 'Entregas do fim de outubro', tasks: [
-                { id: 't31', date: '03/11', code: '7.7', desc: 'Desenvolver indicadores e estruturar dashboard', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm7', date: '26/10', scope: 'Acompanhamento (15 dias)', tasks: [] },
+            { id: 'm8', date: '03/11', scope: 'Entregas da Semana', tasks: [
+                { id: 't32', date: '03/11', code: '7.7', desc: 'Desenvolver indicadores e estruturar dashboard', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm9', date: '09/11', scope: 'Entregas de Novembro', tasks: [
-                { id: 't32', date: '07/11', code: '5.4', desc: 'BI e homologação', status: 'pending', assignee: '', newDate: '' },
-                { id: 't33', date: '07/11', code: '5.5', desc: 'Plano de ação, ajustes e expansão', status: 'pending', assignee: '', newDate: '' },
-                { id: 't34', date: '07/11', code: '5.8', desc: 'Desenvolver um BI - Monitoramento', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm9', date: '09/11', scope: 'Entregas da Semana', tasks: [
+                { id: 't33', date: '07/11', code: '5.4', desc: 'BI e homologação', status: 'pending', assignee: '', newDate: '' },
+                { id: 't34', date: '07/11', code: '5.5', desc: 'Plano de ação, ajustes e expansão', status: 'pending', assignee: '', newDate: '' },
+                { id: 't35', date: '07/11', code: '5.8', desc: 'Desenvolver um BI - Monitoramento', status: 'pending', assignee: '', newDate: '' }
             ]},
-             { id: 'm10', date: '16/11', scope: 'Revisão', tasks: [] },
-             { id: 'm11', date: '23/11', scope: 'Revisão', tasks: [] },
-            { id: 'm12', date: '30/11', scope: 'Entregas de final de Novembro', tasks: [
-                { id: 't35', date: '30/11', code: '3.4', desc: 'Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)', status: 'pending', assignee: '', newDate: '' },
-                { id: 't36', date: '30/11', code: '3.5', desc: 'Corrigir distorções', status: 'pending', assignee: '', newDate: '' },
-                { id: 't37', date: '30/11', code: '3.6', desc: 'Criar relatórios', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm10', date: '16/11', scope: 'Acompanhamento (15 dias)', tasks: [] },
+            { id: 'm11', date: '23/11', scope: 'Acompanhamento (15 dias)', tasks: [] },
+            { id: 'm12', date: '30/11', scope: 'Entregas da Semana', tasks: [
+                { id: 't36', date: '30/11', code: '3.4', desc: 'Parametrizar tabelas por estados (Filiais e Estados de venda/Difal)', status: 'pending', assignee: '', newDate: '' },
+                { id: 't37', date: '30/11', code: '3.5', desc: 'Corrigir distorções', status: 'pending', assignee: '', newDate: '' },
+                { id: 't38', date: '30/11', code: '3.6', desc: 'Criar relatórios', status: 'pending', assignee: '', newDate: '' }
             ]},
-            { id: 'm13', date: '07/12', scope: 'Entregas do início de Dezembro', tasks: [
-                { id: 't38', date: '07/12', code: '9.1', desc: 'Garantir que clientes, produtos, canais e operações gerem resultado sustentável (Acompanhando resultados periodicamente)', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm13', date: '07/12', scope: 'Entregas da Semana', tasks: [
+                { id: 't39', date: '07/12', code: '9.1', desc: 'Garantir que clientes, produtos, canais e operações gerem resultado sustentável', status: 'pending', assignee: '', newDate: '' }
             ]},
-             { id: 'm14', date: '21/12', scope: 'Entregas Finais', tasks: [
-                { id: 't39', date: '19/12', code: '7.2', desc: 'Saneamento: Validar cadastros, SKU ativos/inativos, ABC, Estoque sem giro, Cobertura, Distorções', status: 'pending', assignee: '', newDate: '' },
-                { id: 't40', date: '19/12', code: '7.8', desc: 'Governança - Reuniões semanais para tratamento de indicadores', status: 'pending', assignee: '', newDate: '' }
+            { id: 'm14', date: '21/12', scope: 'Entregas Finais', tasks: [
+                { id: 't40', date: '19/12', code: '7.2', desc: 'Saneamento: Validar cadastros, SKU ativos/inativos, ABC, Estoque sem giro, Cobertura, Distorções', status: 'pending', assignee: '', newDate: '' },
+                { id: 't41', date: '19/12', code: '7.8', desc: 'Governança - Reuniões semanais para tratamento de indicadores', status: 'pending', assignee: '', newDate: '' }
             ]}
         ];
 
-        // Estado Global
         let state = [];
         let auditLogs = [];
         let currentFilterAssignee = null;
@@ -390,7 +396,6 @@
         let currentEditingMeetingId = null;
         let currentEditingTaskId = null;
 
-        // Sistema de Notificações
         window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -402,9 +407,11 @@
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
 
+        // ---------------------------------------------------------
+        // MOTOR DE INTELIGÊNCIA ARTIFICIAL (GEMINI API)
+        // ---------------------------------------------------------
         async function callGemini(userQuery, systemPrompt) {
-            // Utilizando o modelo do Canvas (gemini-3-flash-preview) sem API KEY - A autorização ocorre implicitamente no ambiente.
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             
             try {
                 const response = await fetch(apiUrl, {
@@ -419,7 +426,7 @@
                 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.error?.message || "Erro desconhecido na API");
+                    throw new Error(err.error?.message || "Erro desconhecido na API do Gemini.");
                 }
                 
                 const result = await response.json();
@@ -433,10 +440,10 @@
                     text = text.replace(/\n/g, '<br>');
                     return text;
                 }
-                return "Não foi possível gerar a análise. A IA não retornou um conteúdo válido.";
+                return "A IA não retornou um conteúdo válido.";
             } catch(e) {
-                console.error(e);
-                return `🚨 **Erro de Conexão:** Falha ao se comunicar com a IA (O ambiente não pôde validar a chamada). Detalhe: ${e.message}`;
+                console.error("Gemini Error:", e);
+                return `🚨 **Falha na Inteligência Artificial:** ${e.message}`;
             }
         }
 
@@ -457,16 +464,15 @@
 
         window.generateAiTaskAudit = async () => {
             const rawContent = document.getElementById('ai-task-input').value.trim();
-            if(!rawContent) { alert("Cole o conteúdo bruto, ata ou resumo da entrega primeiro."); return; }
+            if(!rawContent) { alert("Cole o conteúdo bruto para análise."); return; }
 
             const btn = document.getElementById('btn-generate-ai');
-            btn.innerHTML = '⏱ Processando Documento...';
+            btn.innerHTML = '⏱ Processando com IA...';
             btn.disabled = true;
 
-            const systemPrompt = `Você é um Consultor Sênior e Guardião de Auditoria de Projetos. Sua função é analisar o texto bruto colado pelo usuário e verificar rigorosamente se ele comprova a execução da Tarefa Exigida.
-Regras Restritas:
-1. Se o texto for vago ou irrelevante, responda INICIANDO A FRASE EXATAMENTE COM: "ERRO: O conteúdo fornecido não atende ou não comprova a entrega exigida."
-2. Se comprovar, crie um Resumo Executivo em no máximo 3 bullet points limpos e diretos.`;
+            const systemPrompt = `Você é um Consultor Sênior. Analise o texto e verifique rigorosamente se comprova a execução da Tarefa Exigida.
+1. Se for vago ou irrelevante, inicie com: "ERRO: O conteúdo fornecido não atende a entrega." e explique.
+2. Se comprovar, crie um Resumo Executivo em 3 bullet points limpos.`;
             
             const taskDesc = document.getElementById('ai-task-desc-display').innerText;
             const aiResponse = await callGemini(`Tarefa Exigida na Auditoria: ${taskDesc}\n\nConteúdo Fornecido:\n"${rawContent}"`, systemPrompt);
@@ -475,10 +481,10 @@ Regras Restritas:
             document.getElementById('ai-task-result').innerHTML = aiResponse;
             document.getElementById('ai-task-result-container').classList.remove('hidden');
             
-            if(aiResponse.includes("ERRO:")) {
-                document.getElementById('btn-save-ai').classList.add('hidden');
+            if(aiResponse.includes("ERRO:") || aiResponse.includes("Falha na Inteligência")) {
+                document.getElementById('btn-save-ai').classList.add('hidden'); 
             } else {
-                document.getElementById('btn-save-ai').classList.remove('hidden');
+                document.getElementById('btn-save-ai').classList.remove('hidden'); 
             }
 
             btn.innerHTML = 'Refazer Análise';
@@ -492,13 +498,9 @@ Regras Restritas:
                     let task = meeting.tasks.find(t => t.id === currentAiTaskId.task);
                     if(task) {
                         task.aiReport = currentAiReportDraft;
-                        task.status = "completed_on_time"; 
-                        window.showToast("Auditoria validada pela IA e salva!");
-                        if(isDbConnected) {
-                            await window.forceSync();
-                        } else {
-                            renderMeetings();
-                        }
+                        task.status = "completed_on_time";
+                        window.showToast("Auditoria IA validada e salva!");
+                        if(isDbConnected) await window.forceSync(); else renderMeetings();
                     }
                 }
                 window.closeAiTaskModal();
@@ -511,14 +513,10 @@ Regras Restritas:
             contentDiv.innerHTML = `<div class="flex flex-col items-center justify-center h-40 text-slate-400"><svg class="animate-spin h-8 w-8 text-indigo-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>O motor de IA está gerando o relatório...</div>`;
             
             let projData = `Resumo do Projeto (Auditoria):\n`;
-            state.forEach(m => { 
-                m.tasks.forEach(t => { 
-                    projData += `- [Status: ${t.status}] ${t.desc} (Responsável: ${t.assignee || 'N/A'})\n`; 
-                }); 
-            });
+            state.forEach(m => { m.tasks.forEach(t => { projData += `- [Status: ${t.status}] ${t.desc} (Responsável: ${t.assignee || 'N/A'})\n`; }); });
 
-            const sys = `Você é um Consultor Estratégico de BI. Gere uma Matriz SWOT analítica do projeto com base exclusiva no status das entregas. Seja focado em negócios.
-Formato exato de saída obrigatório:
+            const sys = `Você é um Consultor Estratégico. Gere uma Matriz SWOT analítica do projeto baseada no status das entregas.
+Formato exato de saída:
 ## Forças (Pontos Fortes)
 * ...
 ## Fraquezas (Gargalos)
@@ -527,41 +525,47 @@ Formato exato de saída obrigatório:
 * ...
 ## Ameaças (Riscos)
 * ...
-## Parecer Executivo
-(um parágrafo conciso para a Diretoria)`;
+## Parecer Executivo`;
 
             contentDiv.innerHTML = await callGemini(projData, sys);
         };
 
         window.closeSwotModal = () => document.getElementById('modal-swot').classList.add('hidden');
 
-        function finishLoading() {
-            const overlay = document.getElementById('loading-overlay');
-            if(overlay) {
-                overlay.style.opacity = '0';
-                setTimeout(() => overlay.style.display = 'none', 300);
-            }
-        }
-
-        // Fallback de segurança para garantir que a tela sempre destrave (mesmo se a internet cair)
-        setTimeout(finishLoading, 3500);
-
+        // ---------------------------------------------------------
+        // CORE DA APLICAÇÃO E FIREBASE (COM TRATAMENTO DE ERRO ROBUSTO)
+        // ---------------------------------------------------------
         async function initCloudSync() {
+            const overlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
+
             try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
+                
                 await signInAnonymously(auth);
 
                 if(auth.currentUser) {
                     isDbConnected = true;
                     listenToUpdates();
-                } else {
-                    finishLoading();
+                    window.showToast("Conectado ao Banco de Dados!", "success");
                 }
             } catch(e) {
-                console.error("Erro na conexão com Banco:", e);
-                window.showToast("Modo offline ativo.", "error");
+                console.error("Erro CRÍTICO no Firebase:", e);
+                
+                let errorMsg = "Falha ao conectar no banco.";
+                if(e.code === 'auth/unauthorized-domain') {
+                    errorMsg = "O GitHub Pages não está autorizado no Firebase Authentication. Adicione 'fraassis.github.io' lá.";
+                } else if(e.code === 'auth/operation-not-allowed') {
+                    errorMsg = "O login 'Anônimo' não está ativado no Firebase Authentication.";
+                } else {
+                    errorMsg = e.message;
+                }
+
+                window.showToast(`Modo Offline: ${errorMsg}`, "error");
+                
+                // Em caso de erro, carrega a base local para a tela não ficar branca
                 state = defaultState;
                 renderMeetings();
                 renderRightPanel();
@@ -572,8 +576,7 @@ Formato exato de saída obrigatório:
         function parseDateToSort(dateStr) {
             const parts = dateStr.split('/');
             if(parts.length === 2) {
-                let day = parts[0].padStart(2, '0');
-                let month = parts[1].padStart(2, '0');
+                let day = parts[0].padStart(2, '0'); let month = parts[1].padStart(2, '0');
                 return parseInt(`2026${month}${day}`);
             }
             if(parts.length === 3) {
@@ -587,18 +590,13 @@ Formato exato de saída obrigatório:
             onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if(data.meetings && data.meetings.length > 0) {
-                        state = data.meetings;
-                    } else {
-                        state = defaultState;
-                        window.forceSync(); 
-                    }
-                    if(data.logs) auditLogs = data.logs;
+                    if(data.meetings && data.meetings.length > 0) state = data.meetings;
+                    else { state = defaultState; window.forceSync(); }
                     
+                    if(data.logs) auditLogs = data.logs;
                     state.sort((a, b) => parseDateToSort(a.date.split(' ')[0]) - parseDateToSort(b.date.split(' ')[0]));
                 } else {
-                    state = defaultState;
-                    window.forceSync(); 
+                    state = defaultState; window.forceSync(); 
                 }
                 renderMeetings();
                 renderRightPanel();
@@ -610,14 +608,16 @@ Formato exato de saída obrigatório:
         }
 
         window.forceSync = async () => {
-            if(!isDbConnected) return;
+            if(!isDbConnected) {
+                window.showToast("Erro: Você está em modo offline.", "error"); return;
+            }
             const docRef = doc(db, 'artifacts', appId);
             try {
                 await setDoc(docRef, { meetings: state, logs: auditLogs }, { merge: true });
-                window.showToast("Alterações salvas na nuvem com sucesso!");
+                window.showToast("Sincronizado com sucesso!");
             } catch(e) {
                 console.error("Erro ao salvar:", e);
-                window.showToast("Erro ao gravar. Verifique a permissão do Firebase.", "error");
+                window.showToast("Erro de permissão ao salvar. Verifique as regras do Firestore.", "error");
             }
         };
 
@@ -634,6 +634,15 @@ Formato exato de saída obrigatório:
             renderRightPanel();
             if(isDbConnected) window.forceSync();
         }
+
+        function finishLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if(overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 300);
+            }
+        }
+        setTimeout(finishLoading, 4000); // Failsafe
 
         function renderRightPanel() {
             const logsContainer = document.getElementById('logs-container');
@@ -728,20 +737,12 @@ Formato exato de saída obrigatório:
                     if (currentFilterAssignee && (!task.assignee || task.assignee.trim().toLowerCase() !== currentFilterAssignee)) return;
 
                     const taskRow = document.createElement('div');
+                    let statusClass = "border-transparent"; let bgClass = "hover:bg-slate-50"; let selectBg = "bg-slate-100 text-slate-600 border-slate-200";
                     
-                    let statusClass = "border-transparent";
-                    let bgClass = "hover:bg-slate-50";
-                    let selectBg = "bg-slate-100 text-slate-600 border-slate-200";
-                    
-                    if (task.status === 'completed_on_time') {
-                        statusClass = "border-green-500 task-completed"; bgClass = "bg-green-50/50"; selectBg = "bg-green-100 text-green-700 border-green-200";
-                    } else if (task.status === 'completed_late') {
-                        statusClass = "border-teal-500 task-completed-late"; bgClass = "bg-teal-50/50"; selectBg = "bg-teal-100 text-teal-700 border-teal-200";
-                    } else if (task.status === 'delayed') {
-                        statusClass = "border-red-500 task-delayed"; bgClass = "bg-red-50/50 hover:bg-red-50"; selectBg = "bg-red-100 text-red-700 border-red-200";
-                    } else if (task.status === 'rescheduled') {
-                        statusClass = "border-orange-500 task-rescheduled"; bgClass = "bg-orange-50/50 hover:bg-orange-50"; selectBg = "bg-orange-100 text-orange-700 border-orange-200";
-                    }
+                    if (task.status === 'completed_on_time') { statusClass = "border-green-500 task-completed"; bgClass = "bg-green-50/50"; selectBg = "bg-green-100 text-green-700 border-green-200"; }
+                    else if (task.status === 'completed_late') { statusClass = "border-teal-500 task-completed-late"; bgClass = "bg-teal-50/50"; selectBg = "bg-teal-100 text-teal-700 border-teal-200"; }
+                    else if (task.status === 'delayed') { statusClass = "border-red-500 task-delayed"; bgClass = "bg-red-50/50 hover:bg-red-50"; selectBg = "bg-red-100 text-red-700 border-red-200"; }
+                    else if (task.status === 'rescheduled') { statusClass = "border-orange-500 task-rescheduled"; bgClass = "bg-orange-50/50 hover:bg-orange-50"; selectBg = "bg-orange-100 text-orange-700 border-orange-200"; }
 
                     taskRow.className = `task-row p-4 flex flex-col items-start gap-3 border-l-4 ${statusClass} ${bgClass}`;
                     const isTaskDone = task.status.includes('completed');
@@ -841,8 +842,7 @@ Formato exato de saída obrigatório:
 
         window.requestAdminAccess = () => {
             if(isAdmin) {
-                isAdmin = false;
-                document.body.classList.remove('admin-mode-active');
+                isAdmin = false; document.body.classList.remove('admin-mode-active');
                 document.getElementById('admin-status-text').innerText = "Orquestrador";
                 document.getElementById('btn-admin-login').classList.remove('bg-green-600', 'hover:bg-green-700');
             } else {
@@ -856,14 +856,11 @@ Formato exato de saída obrigatório:
 
         window.verifyAdmin = () => {
             if(document.getElementById('admin-password-input').value === 'glicia2026') {
-                isAdmin = true;
-                document.body.classList.add('admin-mode-active');
+                isAdmin = true; document.body.classList.add('admin-mode-active');
                 document.getElementById('admin-status-text').innerText = "Modo Edição Ativo";
                 document.getElementById('btn-admin-login').classList.add('bg-green-600', 'hover:bg-green-700');
                 window.closeAuthModal();
-            } else {
-                document.getElementById('auth-error').classList.remove('hidden');
-            }
+            } else { document.getElementById('auth-error').classList.remove('hidden'); }
         };
 
         window.openMeetingModal = (meetingId = null) => {
@@ -907,34 +904,26 @@ Formato exato de saída obrigatório:
         };
 
         window.openTaskModal = (meetingId) => {
-            currentEditingMeetingId = meetingId;
-            currentEditingTaskId = null;
+            currentEditingMeetingId = meetingId; currentEditingTaskId = null;
             document.getElementById('modal-task-title').innerText = "Adicionar Tarefa";
-            document.getElementById('task-input-date').value = '';
-            document.getElementById('task-input-code').value = '';
-            document.getElementById('task-input-desc').value = '';
-            document.getElementById('btn-delete-task').classList.add('hidden');
+            document.getElementById('task-input-date').value = ''; document.getElementById('task-input-code').value = '';
+            document.getElementById('task-input-desc').value = ''; document.getElementById('btn-delete-task').classList.add('hidden');
             document.getElementById('modal-task').classList.remove('hidden');
         };
 
         window.editTask = (meetingId, taskId) => {
-            currentEditingMeetingId = meetingId;
-            currentEditingTaskId = taskId;
-            let m = state.find(x => x.id === meetingId);
-            let t = m.tasks.find(x => x.id === taskId);
+            currentEditingMeetingId = meetingId; currentEditingTaskId = taskId;
+            let m = state.find(x => x.id === meetingId); let t = m.tasks.find(x => x.id === taskId);
             document.getElementById('modal-task-title').innerText = "Editar Tarefa";
-            document.getElementById('task-input-date').value = t.date;
-            document.getElementById('task-input-code').value = t.code;
-            document.getElementById('task-input-desc').value = t.desc;
-            document.getElementById('btn-delete-task').classList.remove('hidden');
+            document.getElementById('task-input-date').value = t.date; document.getElementById('task-input-code').value = t.code;
+            document.getElementById('task-input-desc').value = t.desc; document.getElementById('btn-delete-task').classList.remove('hidden');
             document.getElementById('modal-task').classList.remove('hidden');
         };
 
         window.closeTaskModal = () => document.getElementById('modal-task').classList.add('hidden');
 
         window.saveTaskData = () => {
-            let d = document.getElementById('task-input-date').value;
-            let c = document.getElementById('task-input-code').value;
+            let d = document.getElementById('task-input-date').value; let c = document.getElementById('task-input-code').value;
             let desc = document.getElementById('task-input-desc').value;
             if(!desc) return alert("A descrição é obrigatória.");
             let m = state.find(x => x.id === currentEditingMeetingId);
@@ -979,11 +968,9 @@ Formato exato de saída obrigatório:
             document.getElementById('circle-progress').setAttribute('stroke-dasharray', `${percentage}, 100`);
             document.getElementById('progress-text-bi').innerText = `${percentage}%`;
             
-            if(percentage === 100 && total > 0) {
-                document.getElementById('circle-progress').classList.replace('text-blue-500', 'text-green-500');
-            } else {
-                document.getElementById('circle-progress').classList.replace('text-green-500', 'text-blue-500');
-            }
+            if(percentage === 100 && total > 0) { document.getElementById('circle-progress').classList.replace('text-blue-500', 'text-green-500'); } 
+            else { document.getElementById('circle-progress').classList.replace('text-green-500', 'text-blue-500'); }
+            
             renderAssigneeStats();
         }
 
@@ -1013,8 +1000,7 @@ Formato exato de saída obrigatório:
 
             const statsArray = Object.values(stats).sort((a, b) => b.total - a.total);
             if(statsArray.length === 0) {
-                container.innerHTML = '<p class="text-[11px] text-slate-400 italic bg-slate-50 p-2 rounded border border-slate-100">Atribua tarefas para ativar as métricas.</p>';
-                return;
+                container.innerHTML = '<p class="text-[11px] text-slate-400 italic bg-slate-50 p-2 rounded border border-slate-100">Atribua tarefas para ativar as métricas.</p>'; return;
             }
 
             statsArray.forEach(stat => {
@@ -1041,9 +1027,7 @@ Formato exato de saída obrigatório:
             });
         }
 
-        window.onload = () => {
-            initCloudSync(); 
-        };
+        window.onload = () => { initCloudSync(); };
     </script>
 </body>
 </html>
